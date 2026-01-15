@@ -63,7 +63,17 @@ export const getCurrentWatch = () => {
     const currentHour = now.getHours()
 
     // Calculate days elapsed since start
-    const diffTime = Math.abs(now.getTime() - EVENT_START_DATE.getTime())
+    const diffTime = now.getTime() - EVENT_START_DATE.getTime()
+
+    // If event hasn't started, default to Day 1 (index 0)
+    if (diffTime < 0) {
+        return {
+            dayIdx: 0,
+            hourIdx: currentHour,
+            hourLabel: HOURS[currentHour]
+        }
+    }
+
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
     // Ensure we stay within the 3-day window (0, 1, 2)
