@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+        request.auth.token.email in ['admin@yfcm.org', 'leadership@yfcm.org', 'ajogbejei@gmail.com'];
+    }
+
+    // Helper to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- USERS COLLECTION ---
+    match /users/{uid} {
+      allow read: if request.auth != null && (isOwner(uid) || isAdmin());
+      allow create: if request.auth != null && isOwner(uid);
+      allow update: if request.auth != null && isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    // --- COMMITMENTS COLLECTION ---
+    match /commitments/{commitId} {
+      allow read: if request.auth != null;
+      // Ensure users only commit for themselves
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // --- ACTIVITY COLLECTION ---
+    match /activity/{actId} {
+      // Activity marquee is visible to all logged in users
+      allow read: if request.auth != null;
+      // System wide activity logs
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // --- PRAYERS COLLECTION ---
+    match /prayers/{prayerId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // --- ACTIVE SESSIONS (PRESENCE) ---
+    match /active_sessions/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isOwner(uid);
+    }
+
+    // --- CONFIGURATION ---
+    match /config/{docId} {
+      allow read: if true; // Public read for start date
+      allow write: if isAdmin();
+    }
+  }
+}
