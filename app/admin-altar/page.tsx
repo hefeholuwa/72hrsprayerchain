@@ -61,7 +61,7 @@ export default function AdminDashboard() {
     const [prayers, setPrayers] = useState<Prayer[]>([])
     const [loading, setLoading] = useState(true)
     const [authorized, setAuthorized] = useState(false)
-    const [activeTab, setActiveTab] = useState<'users' | 'heatmap' | 'activity' | 'prayers' | 'online' | 'settings'>('heatmap')
+    const [activeTab, setActiveTab] = useState<'users' | 'heatmap' | 'activity' | 'prayers' | 'online' | 'settings' | 'coverage'>('heatmap')
 
     const formatDate = (date: any) => {
         const fallbackValue = 'Jan 2026' // Fallback for users before createdAt was added
@@ -311,6 +311,7 @@ export default function AdminDashboard() {
                 <div className="flex gap-4 mb-12 border-b border-white/5 pb-4 overflow-x-auto whitespace-nowrap">
                     {[
                         { id: 'heatmap', label: 'Watch Heatmap' },
+                        { id: 'coverage', label: 'Coverage Audit' },
                         { id: 'activity', label: 'Live Stream' },
                         { id: 'online', label: 'Online Now' },
                         { id: 'users', label: 'Intercessors' },
@@ -336,48 +337,120 @@ export default function AdminDashboard() {
                             users={users}
                             onlineUids={onlineSessions.map(s => s.userId)}
                         />
-                        <div className="mb-8 flex justify-between items-center">
-                            <h4 className="serif text-2xl text-stone-200">72-Hour Coverage</h4>
-                            <div className="flex gap-4 items-center">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-stone-800 rounded-full" />
-                                    <span className="text-[8px] uppercase text-stone-600 font-bold">Empty</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-amber-500/40 rounded-full" />
-                                    <span className="text-[8px] uppercase text-stone-600 font-bold">1-2</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                                    <span className="text-[8px] uppercase text-stone-600 font-bold">3+</span>
-                                </div>
+                    </div>
+                )}
+
+                {/* TAB: COVERAGE AUDIT */}
+                {activeTab === 'coverage' && (
+                    <div className="animate-in fade-in duration-500 space-y-12">
+                        {/* Coverage Progress Bar */}
+                        <div className="glass p-8 rounded-3xl border-stone-800 text-center">
+                            <h4 className="serif text-2xl text-stone-200 mb-6 font-light">Total Wall Integrity</h4>
+                            <div className="flex items-center justify-center gap-6 mb-4">
+                                <span className="text-amber-500 serif text-4xl">{new Set(commitments.map(c => `${c.dayIdx}_${c.hourIdx}`)).size}</span>
+                                <span className="text-stone-700 text-2xl serif">/ 72</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 ml-4">Hours Manned</span>
+                            </div>
+                            <div className="w-full h-2 bg-stone-900 rounded-full overflow-hidden border border-white/5 max-w-2xl mx-auto">
+                                <div
+                                    className="h-full bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-1000"
+                                    style={{ width: `${(new Set(commitments.map(c => `${c.dayIdx}_${c.hourIdx}`)).size / 72) * 100}%` }}
+                                />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {DAYS.map((day, dIdx) => (
-                                <div key={day} className="glass p-6 rounded-3xl border-stone-800">
-                                    <h5 className="text-[10px] font-black text-stone-500 uppercase tracking-[0.4em] mb-6 border-b border-white/5 pb-4">{day}</h5>
-                                    <div className="space-y-2">
-                                        {HOURS.map((hour, hIdx) => {
-                                            const count = getCoverage(dIdx, hIdx)
-                                            return (
-                                                <div key={hIdx} className="flex justify-between items-center group">
-                                                    <span className="text-[10px] text-stone-600 font-bold uppercase">{hour.split(' - ')[0]}</span>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`text-[10px] font-black ${count === 0 ? 'text-red-900/50' : 'text-stone-300'}`}>
-                                                            {count}
-                                                        </span>
-                                                        <div className={`w-8 h-1.5 rounded-full ${count === 0 ? 'bg-stone-900' :
-                                                            count < 3 ? 'bg-amber-600/30' :
-                                                                'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                                                            }`} />
-                                                    </div>
+
+                        {/* Gap List */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="serif text-2xl text-stone-200">Critical Gaps</h4>
+                                    <button
+                                        onClick={() => {
+                                            const gaps: string[] = []
+                                            DAYS.forEach((day, dIdx) => {
+                                                HOURS.forEach((hour, hIdx) => {
+                                                    const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
+                                                    if (count === 0) gaps.push(`${day}: ${hour.split(' - ')[0]}`)
+                                                })
+                                            })
+                                            const text = `🚨 *URGENT PRAYER GAPS*\nThe following hours are currently unmanned on the 72H Prayer Chain. We need watchmen to stand in the gap:\n\n${gaps.join('\n')}\n\nRegister now: ${window.location.origin}/schedule`
+                                            navigator.clipboard.writeText(text)
+                                            alert("Strategic gaps copied to clipboard for sharing!")
+                                        }}
+                                        className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-amber-500/20 transition-all"
+                                    >
+                                        Copy Sharing List
+                                    </button>
+                                </div>
+                                <div className="glass rounded-3xl border-stone-800 p-6 space-y-4 max-h-[600px] overflow-y-auto no-scrollbar">
+                                    {(() => {
+                                        const gaps: any[] = []
+                                        DAYS.forEach((day, dIdx) => {
+                                            HOURS.forEach((hour, hIdx) => {
+                                                const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
+                                                if (count === 0) gaps.push({ day, hour, dIdx, hIdx })
+                                            })
+                                        })
+                                        return gaps.length === 0 ? (
+                                            <div className="text-center py-12 text-stone-600 italic text-[10px] uppercase tracking-widest">
+                                                All gaps have been closed. The Wall is impenetrable.
+                                            </div>
+                                        ) : gaps.map((gap, i) => (
+                                            <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-red-900/30 transition-all">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none mb-1">{gap.day}</span>
+                                                    <span className="text-xs text-stone-200">{gap.hour}</span>
                                                 </div>
-                                            )
-                                        })}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-red-900 rounded-full animate-pulse"></div>
+                                                    <span className="text-[8px] font-black text-red-950 uppercase tracking-tighter">Unmanned</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Strategic Grid View */}
+                            <div className="space-y-6">
+                                <h4 className="serif text-2xl text-stone-200">The Watch Grid</h4>
+                                <div className="glass rounded-3xl border-stone-800 p-8 flex flex-col gap-8">
+                                    {DAYS.map((day, dIdx) => (
+                                        <div key={day}>
+                                            <h5 className="text-[8px] font-black text-stone-600 uppercase tracking-[0.4em] mb-4">{day}</h5>
+                                            <div className="grid grid-cols-8 gap-2">
+                                                {HOURS.map((_, hIdx) => {
+                                                    const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
+                                                    return (
+                                                        <div
+                                                            key={hIdx}
+                                                            title={`${HOURS[hIdx]}: ${count} intercessors`}
+                                                            className={`aspect-square rounded-md border ${count === 0 ? 'bg-stone-900 border-white/5' :
+                                                                    count < 3 ? 'bg-amber-500/20 border-amber-500/20' :
+                                                                        'bg-amber-500 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                                                                }`}
+                                                        />
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="pt-6 border-t border-white/5 flex gap-6 justify-center">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-stone-900 rounded-full" />
+                                            <span className="text-[7px] uppercase text-stone-600 font-bold">Empty</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-amber-500/20 rounded-full" />
+                                            <span className="text-[7px] uppercase text-stone-600 font-bold">1-2</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                                            <span className="text-[7px] uppercase text-stone-600 font-bold">3+</span>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 )}

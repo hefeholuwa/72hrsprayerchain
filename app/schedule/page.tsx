@@ -10,6 +10,7 @@ export default function SchedulePage() {
     const currentWatch = getCurrentWatch()
     const [activeDay, setActiveDay] = useState(currentWatch.dayIdx)
     const [commitments, setCommitments] = useState<Record<string, number>>({})
+    const [totalOccupied, setTotalOccupied] = useState(0)
     const [myCommitments, setMyCommitments] = useState<string[]>([])
     const [usingSimulation, setUsingSimulation] = useState(true)
     const [mounted, setMounted] = useState(false)
@@ -55,7 +56,22 @@ export default function SchedulePage() {
                 setUsingSimulation(true)
             }
         )
-        return unsub
+
+        // Fetch total coverage (all 3 days)
+        const totalQ = query(collection(db, "commitments"))
+        const unsubTotal = onSnapshot(totalQ, (snapshot) => {
+            const occupiedSlots = new Set()
+            snapshot.forEach(d => {
+                const data = d.data()
+                occupiedSlots.add(`${data.dayIdx}_${data.hourIdx}`)
+            })
+            setTotalOccupied(occupiedSlots.size)
+        })
+
+        return () => {
+            unsub()
+            unsubTotal()
+        }
     }, [activeDay])
 
     const toggleCommit = async (hourIdx: number) => {
@@ -112,6 +128,26 @@ export default function SchedulePage() {
             <div className="relative z-10 max-w-4xl mx-auto animate-in fade-in duration-1000 slide-in-from-bottom-8">
                 <div className="text-center mb-16">
                     <h2 className="serif text-4xl text-stone-100 mb-6 font-light tracking-tight">The Watchman&apos;s Grid</h2>
+
+                    {/* Coverage Indicator */}
+                    {!usingSimulation && (
+                        <div className="mb-8 flex flex-col items-center animate-in fade-in duration-1000">
+                            <div className="flex items-center gap-4 mb-3">
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500">Wall Coverage</span>
+                                <span className="text-amber-500 serif text-xl">{totalOccupied}<span className="text-stone-600 text-sm">/72</span></span>
+                            </div>
+                            <div className="w-48 h-1 bg-stone-900 rounded-full overflow-hidden border border-white/5">
+                                <div
+                                    className="h-full bg-amber-500 transition-all duration-1000 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                                    style={{ width: `${(totalOccupied / 72) * 100}%` }}
+                                />
+                            </div>
+                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
+                                {totalOccupied === 72 ? "The Wall is Complete!" : `${72 - totalOccupied} watches still need a watchman.`}
+                            </p>
+                        </div>
+                    )}
+
                     <p className="text-stone-500 text-sm font-light max-w-sm mx-auto italic tracking-wide">
                         {usingSimulation
                             ? "Syncing with the heavens..."
@@ -166,10 +202,15 @@ export default function SchedulePage() {
                                     <span className="text-sm font-light text-stone-200 block mb-1">{hour}</span>
 
                                     <div className="flex items-center justify-between mt-6">
-                                        <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors
-                                            ${isMine ? 'text-stone-100' : 'text-stone-600 group-hover:text-amber-500/80'}`}>
-                                            {isMine ? 'Registered' : 'Register'}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors
+                                                ${isMine ? 'text-stone-100' : count === 0 ? 'text-amber-500/80 animate-pulse' : 'text-stone-600 group-hover:text-amber-500/80'}`}>
+                                                {isMine ? 'Registered' : count === 0 ? 'Fill this Gap' : 'Register'}
+                                            </span>
+                                            {count === 0 && !isMine && (
+                                                <span className="text-[7px] text-amber-500/40 font-black uppercase tracking-tighter mt-1 animate-pulse">Urgent Coverage Needed</span>
+                                            )}
+                                        </div>
                                         {isCurrentWatch && (
                                             <span className="text-[8px] text-amber-500/60 font-black uppercase tracking-widest italic">Current</span>
                                         )}
