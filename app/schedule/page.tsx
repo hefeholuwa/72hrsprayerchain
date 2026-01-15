@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DAYS, HOURS, getCurrentWatch, getSimulatedOccupancy } from '@/lib/constants'
+import { useEventTiming } from '@/hooks/useEventTiming'
 import { auth, db, isFirebaseAvailable } from '@/lib/firebase'
 import { collection, query, where, onSnapshot, setDoc, doc, serverTimestamp } from "firebase/firestore"
 
 export default function SchedulePage() {
+    const { isStarted } = useEventTiming()
     const currentWatch = getCurrentWatch()
     const [activeDay, setActiveDay] = useState(currentWatch.dayIdx)
     const [commitments, setCommitments] = useState<Record<string, number>>({})
@@ -172,7 +174,7 @@ export default function SchedulePage() {
                     {HOURS.map((hour, idx) => {
                         const count = usingSimulation ? getSimulatedOccupancy(activeDay, idx) : (commitments[idx.toString()] || 0)
                         const isMine = myCommitments.includes(idx.toString())
-                        const isCurrentWatch = activeDay === currentWatch.dayIdx && idx === currentWatch.hourIdx
+                        const isCurrentWatch = isStarted && activeDay === currentWatch.dayIdx && idx === currentWatch.hourIdx
                         const level = getLevel(count)
 
                         return (
