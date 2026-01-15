@@ -119,12 +119,12 @@ export default function SchedulePage() {
                     </p>
                 </div>
 
-                <div className="flex border-b border-white/5 mb-12 overflow-x-auto no-scrollbar scroll-smooth">
+                <div className="flex border-b border-white/5 mb-8 md:mb-12 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 md:mx-0 md:px-0">
                     {DAYS.map((day, idx) => (
                         <button
                             key={day}
                             onClick={() => setActiveDay(idx)}
-                            className={`flex-1 pb-6 text-[10px] font-black tracking-[0.4em] uppercase transition-all whitespace-nowrap px-8
+                            className={`flex-1 pb-4 md:pb-6 text-[9px] md:text-[10px] font-black tracking-[0.3em] md:tracking-[0.4em] uppercase transition-all whitespace-nowrap px-6 md:px-8
                             ${activeDay === idx ? 'text-amber-500 border-b-2 border-amber-500' : 'text-stone-600 border-b-2 border-transparent hover:text-stone-400'}`}
                         >
                             {day}

@@ -166,7 +166,7 @@ export default function PrayerWall() {
                                     </span>
                                 </button>
                                 {prayer.amenCount > 0 && (
-                                    <span className="text-[9px] text-stone-600 font-bold uppercase tracking-[0.2em]">
+                                    <span className="text-[8px] md:text-[9px] text-stone-600 font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] leading-tight">
                                         {prayer.amenCount} intercessors standing with you
                                     </span>
                                 )}

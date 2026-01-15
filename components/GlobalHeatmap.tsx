@@ -76,7 +76,7 @@ export default function GlobalHeatmap({ users, onlineUids }: Props) {
     }, [users, onlineUids])
 
     return (
-        <div className="relative w-full aspect-[2/1] bg-[#050505] rounded-3xl border border-stone-800 p-8 overflow-hidden group">
+        <div className="relative w-full aspect-square md:aspect-[2/1] bg-[#050505] rounded-3xl border border-stone-800 p-4 md:p-8 overflow-hidden group">
             {/* Ambient Depth Layer */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
                 <div className="w-full h-full bg-[radial-gradient(#1c1c1c_1px,transparent_1px)] [background-size:20px_20px]"></div>

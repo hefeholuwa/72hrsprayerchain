@@ -150,30 +150,26 @@ export default function LandingPage() {
                 <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-96 bg-amber-600/20 blur-[120px] flame-pulse" />
             </div>
 
-            <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 md:py-24 animate-in fade-in duration-1000 slide-in-from-bottom-8">
+            <div className="relative z-10 max-w-4xl mx-auto px-6 py-8 md:py-24 animate-in fade-in duration-1000 slide-in-from-bottom-8">
                 {/* Header branding */}
-                <div className="flex justify-between items-center mb-24">
+                <div className="flex justify-between items-center mb-12 md:mb-24">
                     <div className="flex flex-col">
                         <span className="text-[10px] tracking-[0.5em] text-stone-500 uppercase font-black mb-2">
                             {ORGANIZATION}
                         </span>
                         <div className="h-px w-10 bg-amber-600/30" />
                     </div>
-                    <div className="flex items-center gap-3 px-4 py-1.5 glass rounded-full ring-1 ring-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
-                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></span>
-                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">Live Altar</span>
-                    </div>
                 </div>
 
                 {/* Progress Pulse (Only show if started) */}
-                {isStarted && !isEnded && (
-                    <div className="mb-16">
+                {isStarted && (
+                    <div className="mb-12 md:mb-16">
                         <div className="flex justify-between items-end mb-4">
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-1">72H Progress</span>
-                                <span className="serif text-xl text-stone-100 font-light">{progress}% Completed</span>
+                                <span className="serif text-lg md:text-xl text-stone-100 font-light">{progress}% Completed</span>
                             </div>
-                            <span className="text-[10px] text-stone-500 font-bold tracking-widest uppercase">Hour {Math.floor((progress / 100) * 72)} of 72</span>
+                            <span className="text-[9px] md:text-[10px] text-stone-500 font-bold tracking-widest uppercase">Hour {Math.floor((progress / 100) * 72)} of 72</span>
                         </div>
                         <div className="h-1.5 w-full bg-stone-900/50 rounded-full overflow-hidden border border-white/5 p-[1px]">
                             <div
@@ -185,12 +181,12 @@ export default function LandingPage() {
                 )}
 
                 {/* Hero Title */}
-                <div className="mb-24 relative">
-                    <h2 className="serif text-6xl md:text-8xl text-stone-100 leading-[1] mb-8 tracking-tighter">
+                <div className="mb-16 md:mb-24 relative">
+                    <h2 className="serif text-5xl md:text-8xl text-stone-100 leading-[1.1] md:leading-[1] mb-6 md:mb-8 tracking-tighter">
                         72 Hours <br />
                         <span className="italic text-amber-500 font-light drop-shadow-2xl opacity-90">Prayer Chain.</span>
                     </h2>
-                    <p className="text-stone-500 text-sm md:text-lg font-light tracking-wide max-w-lg leading-relaxed italic">
+                    <p className="text-stone-500 text-xs md:text-lg font-light tracking-wide max-w-lg leading-relaxed italic">
                         A continuous global vigil of intercession, worship, and spiritual warfare.
                     </p>
                 </div>

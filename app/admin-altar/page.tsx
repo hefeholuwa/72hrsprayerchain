@@ -385,8 +385,8 @@ export default function AdminDashboard() {
                 {/* TAB: ACTIVITY STREAM */}
                 {activeTab === 'activity' && (
                     <div className="animate-in fade-in duration-500">
-                        <div className="glass rounded-3xl border-stone-800 overflow-hidden">
-                            <table className="w-full text-left">
+                        <div className="glass rounded-3xl border-stone-800 overflow-x-auto no-scrollbar">
+                            <table className="w-full text-left min-w-[600px]">
                                 <thead className="bg-white/5 border-b border-white/5">
                                     <tr>
                                         <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Time</th>
@@ -465,19 +465,19 @@ export default function AdminDashboard() {
 
                 {/* TAB: USERS */}
                 {activeTab === 'users' && (
-                    <div className="animate-in fade-in duration-500 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2">
-                            <div className="mb-8 flex justify-between items-center">
-                                <h4 className="serif text-2xl text-stone-200">Intercessor Scrolls</h4>
+                    <div className="animate-in fade-in duration-500 space-y-12">
+                        <div>
+                            <div className="flex justify-between items-center mb-8">
+                                <h4 className="serif text-2xl text-stone-200">Registered Intercessors</h4>
                                 <button
                                     onClick={exportToCSV}
-                                    className="px-4 py-2 text-stone-500 hover:text-stone-100 text-[9px] font-black uppercase tracking-widest transition-all"
+                                    className="px-6 py-2 glass rounded-full text-[9px] font-black tracking-widest uppercase hover:bg-stone-100 hover:text-[#050505] transition-all"
                                 >
-                                    Export to CSV
+                                    Export Book of Life (CSV)
                                 </button>
                             </div>
-                            <div className="glass rounded-3xl border-stone-800 overflow-hidden shadow-2xl">
-                                <table className="w-full text-left">
+                            <div className="glass rounded-3xl border-stone-800 overflow-x-auto no-scrollbar">
+                                <table className="w-full text-left min-w-[800px]">
                                     <thead className="bg-white/5 border-b border-white/5">
                                         <tr>
                                             <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Name</th>
