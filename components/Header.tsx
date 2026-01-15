@@ -2,16 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { APP_NAME, TAGLINE } from '@/lib/constants'
 
 export default function Header() {
     const [user, setUser] = useState<any>(null)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const pathname = usePathname()
 
     useEffect(() => {
         return auth?.onAuthStateChanged((u) => setUser(u))
     }, [])
+
+    const navLinks = [
+        { name: 'Home', href: '/' },
+        { name: 'Schedule', href: '/schedule' },
+        { name: 'Community', href: '/community' },
+        { name: 'Rules', href: '/rules' },
+    ]
+
+    const isActive = (path: string) => pathname === path
 
     return (
         <header className="p-6 md:p-12 flex flex-col md:flex-row justify-between items-center max-w-6xl mx-auto w-full gap-4 md:gap-8 relative z-50">
@@ -51,15 +62,33 @@ export default function Header() {
                 text-[10px] font-black tracking-[0.3em] text-stone-500 uppercase items-center
                 z-50 animate-in fade-in slide-in-from-top-4 duration-300
             `}>
-                <Link href="/" onClick={() => setIsMenuOpen(false)} className="hover:text-stone-100 transition-all">Home</Link>
-                <Link href="/schedule" onClick={() => setIsMenuOpen(false)} className="hover:text-stone-100 transition-all">Schedule</Link>
-                <Link href="/community" onClick={() => setIsMenuOpen(false)} className="hover:text-stone-100 transition-all">Community</Link>
+                {navLinks.map((link) => (
+                    <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`transition-all ${isActive(link.href) ? 'text-amber-500' : 'hover:text-stone-100'}`}
+                    >
+                        {link.name}
+                    </Link>
+                ))}
                 {user ? (
-                    <Link href="/profile" onClick={() => setIsMenuOpen(false)} className="text-amber-500 hover:text-amber-400 transition-all font-black">Profile</Link>
+                    <Link
+                        href="/profile"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`transition-all font-black ${isActive('/profile') ? 'text-amber-500' : 'hover:text-stone-100 text-stone-500'}`}
+                    >
+                        Profile
+                    </Link>
                 ) : (
-                    <Link href="/login" onClick={() => setIsMenuOpen(false)} className="hover:text-stone-100 transition-all">Login</Link>
+                    <Link
+                        href="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`transition-all ${isActive('/login') ? 'text-amber-500' : 'hover:text-stone-100'}`}
+                    >
+                        Login
+                    </Link>
                 )}
-                <Link href="/rules" onClick={() => setIsMenuOpen(false)} className="hover:text-stone-100 transition-all">Rules</Link>
             </nav>
         </header>
     )
