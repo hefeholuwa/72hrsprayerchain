@@ -288,9 +288,12 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Link
                         href="/enter"
-                        className="flex items-center justify-center bg-stone-100 hover:bg-white text-[#050505] font-black py-5 px-8 rounded-2xl tracking-[0.3em] uppercase text-[10px] transition-all shadow-2xl shadow-stone-900/50"
+                        className={`flex items-center justify-center font-black py-5 px-8 rounded-2xl tracking-[0.3em] uppercase text-[10px] transition-all shadow-2xl 
+                        ${isStarted
+                                ? "bg-stone-100 hover:bg-white text-[#050505] shadow-stone-900/50"
+                                : "glass text-stone-500 border-white/5 opacity-50"}`}
                     >
-                        Enter Altar Room
+                        {isStarted ? "Enter Altar Room" : "Altar Room (Coming Soon)"}
                     </Link>
                     <Link
                         href="/schedule"

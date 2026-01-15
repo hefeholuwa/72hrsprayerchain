@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { PRAYER_ROOM_URL, ORGANIZATION } from '@/lib/constants'
 import { auth, db } from '@/lib/firebase'
 import { collection, query, where, getDocs, limit } from 'firebase/firestore'
+import { useEventTiming } from '@/hooks/useEventTiming'
+import CountdownTimer from '@/components/CountdownTimer'
 
 const CONFIRMATION_KEY = 'prayer_rules_accepted'
 
@@ -16,6 +18,7 @@ export default function EnterPage() {
     const [status, setStatus] = useState<'checking' | 'authorized' | 'unauthorized' | 'not-logged-in'>('checking')
     const [hasEntered, setHasEntered] = useState(false)
     const router = useRouter()
+    const { isStarted, startDate } = useEventTiming()
 
     useEffect(() => {
         // Safety timeout: if verification takes > 10s, fallback to letting them try anyway
@@ -94,6 +97,7 @@ export default function EnterPage() {
 
     const handleEnter = (isAuto: boolean = false) => {
         if (!confirmed && !isAuto) return
+        if (!isStarted) return // Double-gate protection
 
         setRedirecting(true)
         if (!isAuto) {
@@ -151,6 +155,37 @@ export default function EnterPage() {
                     style={{ animationDelay: '3s', animationFillMode: 'forwards' }}
                 >
                     Taking a while? Click to Enter Anyway
+                </button>
+            </div>
+        )
+    }
+
+    // Restriction UI if not started
+    if (!isStarted) {
+        return (
+            <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center max-w-lg mx-auto animate-in fade-in duration-1000">
+                <div className="mb-12">
+                    <div className="w-20 h-20 glass border-stone-800 rounded-full flex items-center justify-center mx-auto mb-8 relative">
+                        <div className="absolute inset-0 rounded-full bg-red-900/5 animate-pulse"></div>
+                        <svg className="w-8 h-8 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m0-6V7m0 10c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z" />
+                        </svg>
+                    </div>
+                    <h2 className="serif text-4xl text-stone-100 mb-6 font-light">The Sanctuary Gates are Closed</h2>
+                    <p className="text-stone-500 text-sm font-light leading-relaxed mb-12 italic max-w-sm mx-auto">
+                        The fire has not yet been kindled. The Altar Room will open once the 72-hour prayer chain officially begins.
+                    </p>
+                </div>
+
+                <div className="p-10 glass rounded-3xl border-stone-800 w-full mb-12">
+                    <CountdownTimer targetDate={startDate} />
+                </div>
+
+                <button
+                    onClick={() => router.push('/')}
+                    className="px-8 py-4 border border-white/5 text-stone-500 rounded-2xl uppercase text-[9px] font-bold tracking-[0.2em] hover:bg-white/5 transition-all"
+                >
+                    Return to the Gates
                 </button>
             </div>
         )
