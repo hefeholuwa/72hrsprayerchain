@@ -278,28 +278,35 @@ export default function AltarRoom() {
 
                     {/* Minimized Floating Bar */}
                     {vocalMinimized && (
-                        <div className="fixed top-8 right-4 z-50 animate-in slide-in-from-top duration-300">
-                            <div className="flex items-center gap-3 px-4 py-3 glass rounded-full border-stone-700 border-amber-500/30 bg-amber-500/5">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                                <span className="text-[9px] uppercase tracking-widest text-amber-500 font-bold">In Vocal Room</span>
-                                <button
-                                    onClick={() => setVocalMinimized(false)}
-                                    className="p-1.5 text-stone-400 hover:text-amber-500 transition-colors"
-                                    title="Expand"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={() => setShowVocalRoom(false)}
-                                    className="p-1.5 text-stone-400 hover:text-red-400 transition-colors"
-                                    title="Leave Room"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
-                                    </svg>
-                                </button>
+                        <div className="fixed top-8 right-8 z-50 animate-in slide-in-from-top duration-500">
+                            <div className="flex items-center gap-4 px-5 py-2.5 glass rounded-full border border-stone-800 hover:border-amber-500/20 transition-all group bg-black/40 backdrop-blur-xl">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-300 font-bold">Vocal Room</span>
+                                </div>
+
+                                <div className="h-4 w-px bg-stone-800 mx-1" />
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setVocalMinimized(false)}
+                                        className="p-1 text-stone-500 hover:text-amber-500 transition-colors"
+                                        title="Expand"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowVocalRoom(false)}
+                                        className="p-1 text-stone-500 hover:text-red-400 transition-colors"
+                                        title="Leave"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
