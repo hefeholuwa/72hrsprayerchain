@@ -153,49 +153,8 @@ export default function AltarRoom() {
             </main>
 
             {/* Reaction Bar */}
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40">
-                <div className="flex items-center gap-3 p-3 glass rounded-full border-stone-800">
-                    <button
-                        onClick={() => sendBurst('🔥')}
-                        className="w-14 h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-2xl active:scale-90"
-                        title="Fire"
-                    >
-                        🔥
-                    </button>
-                    <button
-                        onClick={() => sendBurst('🙏')}
-                        className="w-14 h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-2xl active:scale-90"
-                        title="Amen"
-                    >
-                        🙏
-                    </button>
-                    <button
-                        onClick={() => sendBurst('🙌')}
-                        className="w-14 h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-2xl active:scale-90"
-                        title="Hallelujah"
-                    >
-                        🙌
-                    </button>
-                </div>
-            </div>
-
-            {/* Spirit-Led Promptings Display */}
-            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3 pointer-events-none">
-                {promptings.map((p) => (
-                    <div
-                        key={p.id}
-                        className="px-4 py-2 glass rounded-full border-stone-700 animate-in fade-in slide-in-from-bottom-4 duration-500"
-                    >
-                        <p className="text-sm text-stone-300 italic">"{p.text}"</p>
-                        {p.userName && (
-                            <p className="text-[8px] text-stone-500 uppercase tracking-widest text-center mt-1">- {p.userName}</p>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            {/* Spirit-Led Prompting Input */}
-            <div className="fixed bottom-24 left-8 z-40">
+            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-3">
+                {/* Spirit-Led Prompting Input */}
                 <form
                     onSubmit={(e) => {
                         e.preventDefault()
@@ -220,6 +179,46 @@ export default function AltarRoom() {
                         Send
                     </button>
                 </form>
+
+                {/* Emoji Reactions */}
+                <div className="flex items-center gap-3 p-3 glass rounded-full border-stone-800">
+                    <button
+                        onClick={() => sendBurst('🔥')}
+                        className="w-12 h-12 md:w-14 md:h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-xl md:text-2xl active:scale-90"
+                        title="Fire"
+                    >
+                        🔥
+                    </button>
+                    <button
+                        onClick={() => sendBurst('🙏')}
+                        className="w-12 h-12 md:w-14 md:h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-xl md:text-2xl active:scale-90"
+                        title="Amen"
+                    >
+                        🙏
+                    </button>
+                    <button
+                        onClick={() => sendBurst('🙌')}
+                        className="w-12 h-12 md:w-14 md:h-14 rounded-full glass border-stone-700 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-xl md:text-2xl active:scale-90"
+                        title="Hallelujah"
+                    >
+                        🙌
+                    </button>
+                </div>
+            </div>
+
+            {/* Spirit-Led Promptings Display */}
+            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3 pointer-events-none max-w-sm px-4">
+                {promptings.map((p) => (
+                    <div
+                        key={p.id}
+                        className="px-4 py-2 glass rounded-full border-stone-700 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                    >
+                        <p className="text-sm text-stone-300 italic text-center">"{p.text}"</p>
+                        {p.userName && (
+                            <p className="text-[8px] text-stone-500 uppercase tracking-widest text-center mt-1">- {p.userName}</p>
+                        )}
+                    </div>
+                ))}
             </div>
 
             {/* Vocal Room Drawer / Minimized Bar */}
@@ -279,7 +278,7 @@ export default function AltarRoom() {
 
                     {/* Minimized Floating Bar */}
                     {vocalMinimized && (
-                        <div className="fixed bottom-28 right-4 z-50 animate-in slide-in-from-right duration-300">
+                        <div className="fixed top-8 right-4 z-50 animate-in slide-in-from-top duration-300">
                             <div className="flex items-center gap-3 px-4 py-3 glass rounded-full border-stone-700 border-amber-500/30 bg-amber-500/5">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                                 <span className="text-[9px] uppercase tracking-widest text-amber-500 font-bold">In Vocal Room</span>
