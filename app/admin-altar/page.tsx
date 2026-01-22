@@ -555,7 +555,7 @@ export default function AdminDashboard() {
                                     <thead className="bg-white/5 border-b border-white/5">
                                         <tr>
                                             <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Name</th>
-                                            <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Watches</th>
+                                            <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Selected Watch</th>
                                             <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Location</th>
                                             <th className="p-6 text-[9px] uppercase tracking-[0.2em] text-stone-500 font-black">Joined</th>
                                         </tr>
@@ -582,10 +582,10 @@ export default function AdminDashboard() {
                                                     </td>
                                                     <td className="p-6">
                                                         <div className="flex items-center justify-between group/row">
-                                                            <span className={`text-[10px] font-bold ${userWatchCount > 0 ? 'text-amber-500' : 'text-stone-700'}`}>
-                                                                {userWatchCount} Watch
+                                                            <span className={`text-[10px] font-bold ${userWatch ? 'text-amber-500' : 'text-stone-700'}`}>
+                                                                {userWatch ? HOURS[userWatch.hourIdx] : 'No Watch'}
                                                             </span>
-                                                            {userWatchCount > 0 && (
+                                                            {userWatch && (
                                                                 <button
                                                                     onClick={() => deleteUserWatch(u.id)}
                                                                     className="opacity-0 group-hover/row:opacity-100 p-1 text-red-900 hover:text-red-500 transition-all"
