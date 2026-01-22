@@ -2,6 +2,11 @@ export interface PrayerTheme {
     title: string;
     scripture: string;
     points: string[];
+    colorScheme: {
+        primary: string;      // Main accent color (hex)
+        glow: string;         // Glow/ambient color (hex)
+        background: string;   // Radial gradient stop (rgba)
+    };
 }
 
 export const PRAYER_THEMES: Record<number, PrayerTheme> = {
@@ -12,7 +17,12 @@ export const PRAYER_THEMES: Record<number, PrayerTheme> = {
             "Repentance from personal and secret sins.",
             "Fresh hunger for the Word and Presence of God.",
             "Yielding our members as instruments of righteousness."
-        ]
+        ],
+        colorScheme: {
+            primary: "#7c3aed",      // Deep Purple
+            glow: "#4c1d95",         // Royal Purple
+            background: "rgba(124, 58, 237, 0.08)"
+        }
     },
     6: {
         title: "The Church & Global Harvest",
@@ -21,7 +31,12 @@ export const PRAYER_THEMES: Record<number, PrayerTheme> = {
             "Spiritual awakening in the local church.",
             "Boldness for missionaries in unreached territories.",
             "Unity among the Body of Christ."
-        ]
+        ],
+        colorScheme: {
+            primary: "#f59e0b",      // Amber Gold
+            glow: "#b45309",         // Deep Amber
+            background: "rgba(245, 158, 11, 0.08)"
+        }
     },
     12: {
         title: "National Transformation & Leadership",
@@ -30,7 +45,12 @@ export const PRAYER_THEMES: Record<number, PrayerTheme> = {
             "Wisdom for leaders and policy makers.",
             "Peace and security within our borders.",
             "Economic restoration and justice for the poor."
-        ]
+        ],
+        colorScheme: {
+            primary: "#f97316",      // Bright Orange
+            glow: "#ea580c",         // Fiery Orange
+            background: "rgba(249, 115, 22, 0.08)"
+        }
     },
     18: {
         title: "Families & The Next Generation",
@@ -39,7 +59,12 @@ export const PRAYER_THEMES: Record<number, PrayerTheme> = {
             "Restoration of broken homes and marriages.",
             "Protection of the youth from negative influences.",
             "Transmission of faith to the coming generation."
-        ]
+        ],
+        colorScheme: {
+            primary: "#dc2626",      // Deep Red
+            glow: "#991b1b",         // Ember Red
+            background: "rgba(220, 38, 38, 0.08)"
+        }
     }
 };
 

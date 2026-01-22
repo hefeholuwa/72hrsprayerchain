@@ -106,9 +106,7 @@ export default function EnterPage() {
 
         // Mental transition delay
         setTimeout(() => {
-            window.open(PRAYER_ROOM_URL, '_blank')
-            setRedirecting(false)
-            setHasEntered(true)
+            router.push('/altar')
         }, 1500)
     }
 

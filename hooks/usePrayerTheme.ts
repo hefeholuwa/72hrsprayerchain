@@ -31,10 +31,24 @@ export function usePrayerTheme() {
     useEffect(() => {
         if (!db) return
 
-        const unsub = onSnapshot(doc(db, "config", "prayer_points"), (doc) => {
-            if (doc.exists()) {
-                const data = doc.data() as Record<number, PrayerTheme>
-                setThemes(prev => ({ ...prev, ...data }))
+        const unsub = onSnapshot(doc(db, "config", "prayer_points"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data() as Record<number, Partial<PrayerTheme>>
+                // Merge Firebase data with defaults, preserving colorScheme if not in Firebase
+                setThemes(prev => {
+                    const merged: Record<number, PrayerTheme> = { ...prev }
+                    for (const key of Object.keys(data)) {
+                        const k = parseInt(key)
+                        if (prev[k]) {
+                            merged[k] = {
+                                ...prev[k],
+                                ...data[k],
+                                colorScheme: data[k]?.colorScheme || prev[k].colorScheme
+                            }
+                        }
+                    }
+                    return merged
+                })
             }
         }, (err) => {
             console.warn("Using default prayer themes (offline):", err)

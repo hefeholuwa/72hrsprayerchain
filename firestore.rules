@@ -57,6 +57,20 @@ service cloud.firestore {
       allow write: if request.auth != null && isOwner(uid);
     }
 
+    // --- ALTAR INTERACTIONS (BURSTS, PROMPTINGS, FOCUS) ---
+    match /altar_interactions/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      // No update/delete - these are ephemeral and will be cleaned up
+    }
+
+    // --- WATCHES (24-HOUR WATCH COMMITMENTS) ---
+    match /watches/{watchId} {
+      allow read: if request.auth != null;
+      // Only allow if the watchId contains the user's UID
+      allow write: if request.auth != null && watchId.matches('watch_' + request.auth.uid);
+    }
+
     // --- CONFIGURATION ---
     match /config/{docId} {
       allow read: if true; // Public read for start date

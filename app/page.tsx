@@ -7,6 +7,7 @@ import { ORGANIZATION, TAGLINE, getCurrentWatch, DAYS, getEventProgress } from '
 import { auth, db, isFirebaseAvailable, onAuthStateChanged, signOut } from '@/lib/firebase'
 import { doc, getDoc, collection, getDocs, query, where, limit, onSnapshot, updateDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import GlobalHeatmap from '@/components/GlobalHeatmap'
+import GlobalFire from '@/components/GlobalFire'
 import CountdownTimer from '@/components/CountdownTimer'
 import { useEventTiming } from '@/hooks/useEventTiming'
 import { usePrayerTheme } from '@/hooks/usePrayerTheme'
@@ -315,8 +316,10 @@ export default function LandingPage() {
                     </div>
                 </div>
 
+
+
                 {/* Global Pulse Heatmap */}
-                <div className="mt-24">
+                <div className="mt-16">
                     <GlobalHeatmap users={allUsers} onlineUids={onlineUids} />
                 </div>
 

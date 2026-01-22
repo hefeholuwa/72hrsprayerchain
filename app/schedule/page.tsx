@@ -2,18 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { DAYS, HOURS, getCurrentWatch, getSimulatedOccupancy } from '@/lib/constants'
+import { HOURS, getCurrentWatch, getSimulatedOccupancy } from '@/lib/constants'
 import { useEventTiming } from '@/hooks/useEventTiming'
 import { auth, db, isFirebaseAvailable } from '@/lib/firebase'
-import { collection, query, where, onSnapshot, setDoc, doc, serverTimestamp } from "firebase/firestore"
+import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, deleteDoc } from "firebase/firestore"
 
 export default function SchedulePage() {
     const { isStarted } = useEventTiming()
     const currentWatch = getCurrentWatch()
-    const [activeDay, setActiveDay] = useState(currentWatch.dayIdx)
     const [commitments, setCommitments] = useState<Record<string, number>>({})
-    const [totalOccupied, setTotalOccupied] = useState(0)
-    const [myCommitments, setMyCommitments] = useState<string[]>([])
+    const [totalWatchesCovered, setTotalWatchesCovered] = useState(0)
+    const [myWatch, setMyWatch] = useState<number | null>(null)
     const [usingSimulation, setUsingSimulation] = useState(true)
     const [mounted, setMounted] = useState(false)
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null)
@@ -37,20 +36,27 @@ export default function SchedulePage() {
             return
         }
 
-        const q = query(collection(db, "commitments"), where("dayIdx", "==", activeDay))
+        // Fetch all watch commitments (no dayIdx filtering)
+        const q = query(collection(db, "watches"))
         const unsub = onSnapshot(q,
             (snapshot) => {
                 const counts: Record<string, number> = {}
-                const mine: string[] = []
+                const coveredWatches = new Set<number>()
+                let userWatch: number | null = null
+
                 snapshot.forEach(d => {
                     const data = d.data()
-                    counts[data.hourIdx] = (counts[data.hourIdx] || 0) + 1
+                    const hourIdx = data.hourIdx as number
+                    counts[hourIdx] = (counts[hourIdx] || 0) + 1
+                    coveredWatches.add(hourIdx)
                     if (auth?.currentUser && data.userId === auth.currentUser.uid) {
-                        mine.push(data.hourIdx)
+                        userWatch = hourIdx
                     }
                 })
+
                 setCommitments(counts)
-                setMyCommitments(mine)
+                setTotalWatchesCovered(coveredWatches.size)
+                setMyWatch(userWatch)
                 setUsingSimulation(false)
             },
             (error) => {
@@ -59,22 +65,8 @@ export default function SchedulePage() {
             }
         )
 
-        // Fetch total coverage (all 3 days)
-        const totalQ = query(collection(db, "commitments"))
-        const unsubTotal = onSnapshot(totalQ, (snapshot) => {
-            const occupiedSlots = new Set()
-            snapshot.forEach(d => {
-                const data = d.data()
-                occupiedSlots.add(`${data.dayIdx}_${data.hourIdx}`)
-            })
-            setTotalOccupied(occupiedSlots.size)
-        })
-
-        return () => {
-            unsub()
-            unsubTotal()
-        }
-    }, [activeDay])
+        return () => unsub()
+    }, [])
 
     const toggleCommit = async (hourIdx: number) => {
         if (!auth?.currentUser) {
@@ -87,20 +79,22 @@ export default function SchedulePage() {
             return
         }
 
-        const commitId = `${auth.currentUser.uid}_${activeDay}_${hourIdx}`
-        const docRef = doc(db, "commitments", commitId)
+        // Each user can only have one watch
+        const commitId = `watch_${auth.currentUser.uid}`
+        const docRef = doc(db, "watches", commitId)
 
-        if (myCommitments.includes(hourIdx.toString())) return
+        // If already registered for this watch, do nothing
+        if (myWatch === hourIdx) return
 
         try {
             await setDoc(docRef, {
                 userId: auth.currentUser.uid,
                 userName: auth.currentUser.displayName || "A Watchman",
-                dayIdx: activeDay,
-                hourIdx: hourIdx.toString(),
+                hourIdx: hourIdx,
                 timestamp: serverTimestamp()
             })
-            // 2. Record this in the activity feed
+
+            // Record activity
             const { addDoc } = await import('firebase/firestore')
             await addDoc(collection(db, "activity"), {
                 userName: auth.currentUser.displayName || "A Watchman",
@@ -136,16 +130,16 @@ export default function SchedulePage() {
                         <div className="mb-8 flex flex-col items-center animate-in fade-in duration-1000">
                             <div className="flex items-center gap-4 mb-3">
                                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500">Wall Coverage</span>
-                                <span className="text-amber-500 serif text-xl">{totalOccupied}<span className="text-stone-600 text-sm">/72</span></span>
+                                <span className="text-amber-500 serif text-xl">{totalWatchesCovered}<span className="text-stone-600 text-sm">/24</span></span>
                             </div>
                             <div className="w-48 h-1 bg-stone-900 rounded-full overflow-hidden border border-white/5">
                                 <div
                                     className="h-full bg-amber-500 transition-all duration-1000 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                                    style={{ width: `${(totalOccupied / 72) * 100}%` }}
+                                    style={{ width: `${(totalWatchesCovered / 24) * 100}%` }}
                                 />
                             </div>
                             <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
-                                {totalOccupied === 72 ? "The Wall is Complete!" : `${72 - totalOccupied} watches still need a watchman.`}
+                                {totalWatchesCovered === 24 ? "The Wall is Complete!" : `${24 - totalWatchesCovered} watches still need a watchman.`}
                             </p>
                         </div>
                     )}
@@ -153,29 +147,15 @@ export default function SchedulePage() {
                     <p className="text-stone-500 text-sm font-light max-w-sm mx-auto italic tracking-wide">
                         {usingSimulation
                             ? "Syncing with the heavens..."
-                            : "The registry is live. Your watch is recorded in the scrolls."}
+                            : "Pick your watch. One hour, all 72 hours."}
                     </p>
-                </div>
-
-                <div className="flex border-b border-white/5 mb-8 md:mb-12 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 md:mx-0 md:px-0">
-                    {DAYS.map((day, idx) => (
-                        <button
-                            key={day}
-                            onClick={() => setActiveDay(idx)}
-                            className={`flex-1 pb-4 md:pb-6 text-[9px] md:text-[10px] font-black tracking-[0.3em] md:tracking-[0.4em] uppercase transition-all whitespace-nowrap px-6 md:px-8
-                            ${activeDay === idx ? 'text-amber-500 border-b-2 border-amber-500' : 'text-stone-600 border-b-2 border-transparent hover:text-stone-400'}`}
-                        >
-                            {day}
-                        </button>
-                    ))}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {HOURS.map((hour, idx) => {
-                        const count = usingSimulation ? getSimulatedOccupancy(activeDay, idx) : (commitments[idx.toString()] || 0)
-                        const isMine = myCommitments.includes(idx.toString())
-                        const isCurrentWatch = isStarted && activeDay === currentWatch.dayIdx && idx === currentWatch.hourIdx
-                        const level = getLevel(count)
+                        const count = usingSimulation ? getSimulatedOccupancy(0, idx) : (commitments[idx] || 0)
+                        const isMine = myWatch === idx
+                        const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
 
                         return (
                             <button
@@ -207,7 +187,7 @@ export default function SchedulePage() {
                                         <div className="flex flex-col">
                                             <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors
                                                 ${isMine ? 'text-stone-100' : count === 0 ? 'text-amber-500/80 animate-pulse' : 'text-stone-600 group-hover:text-amber-500/80'}`}>
-                                                {isMine ? 'Registered' : count === 0 ? 'Fill this Gap' : 'Register'}
+                                                {isMine ? 'Your Watch' : count === 0 ? 'Fill this Gap' : 'Join Watch'}
                                             </span>
                                             {count === 0 && !isMine && (
                                                 <span className="text-[7px] text-amber-500/40 font-black uppercase tracking-tighter mt-1 animate-pulse">Urgent Coverage Needed</span>

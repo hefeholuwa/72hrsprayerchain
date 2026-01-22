@@ -76,19 +76,19 @@ export default function GlobalHeatmap({ users, onlineUids }: Props) {
     }, [users, onlineUids])
 
     return (
-        <div className="relative w-full aspect-square md:aspect-[2/1] bg-[#050505] rounded-3xl border border-stone-800 p-4 md:p-8 overflow-hidden group">
+        <div className="relative w-full aspect-[4/3] md:aspect-[2/1] bg-[#050505] rounded-3xl border border-stone-800 p-4 md:p-8 overflow-hidden group">
             {/* Ambient Depth Layer */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
                 <div className="w-full h-full bg-[radial-gradient(#1c1c1c_1px,transparent_1px)] [background-size:20px_20px]"></div>
             </div>
 
-            <h4 className="absolute top-8 left-8 serif text-xl text-stone-200 z-10 flex items-center gap-3">
-                <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
+            <h4 className="absolute top-4 left-4 md:top-8 md:left-8 serif text-base md:text-xl text-stone-200 z-10 flex items-center gap-2 md:gap-3">
+                <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
                 Global Watchman Pulse
             </h4>
 
             {/* SVG Map Container */}
-            <svg viewBox="0 0 100 50" className="w-full h-full relative z-0">
+            <svg viewBox="0 0 100 50" className="w-full h-full relative z-0 mt-8 md:mt-0">
                 {/* Background Continental Shapes (Subtle) */}
                 <g className="fill-stone-900/40">
                     {/* Simplified Americas */}
@@ -131,14 +131,14 @@ export default function GlobalHeatmap({ users, onlineUids }: Props) {
                 ))}
             </svg>
 
-            <div className="absolute bottom-6 right-8 flex gap-6 items-center bg-[#050505]/80 backdrop-blur-sm p-3 rounded-xl border border-stone-800/50">
-                <div className="flex items-center gap-2">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:bottom-6 md:right-8 flex gap-4 md:gap-6 items-center bg-[#050505]/80 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-stone-800/50">
+                <div className="flex items-center gap-1.5 md:gap-2">
                     <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                    <span className="text-[8px] uppercase tracking-widest text-stone-500 font-bold">Active Altar</span>
+                    <span className="text-[7px] md:text-[8px] uppercase tracking-widest text-stone-500 font-bold">Active Altar</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
                     <div className="w-1.5 h-1.5 bg-stone-700 rounded-full"></div>
-                    <span className="text-[8px] uppercase tracking-widest text-stone-500 font-bold">Registered</span>
+                    <span className="text-[7px] md:text-[8px] uppercase tracking-widest text-stone-500 font-bold">Registered</span>
                 </div>
             </div>
         </div>

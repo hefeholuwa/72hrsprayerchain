@@ -38,42 +38,42 @@ export default function CountdownTimer({ targetDate }: Props) {
     if (!timeLeft) return null
 
     return (
-        <div className="flex flex-col items-center justify-center animate-in fade-in duration-1000">
-            <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em] mb-8 animate-pulse">Sanctuary Opens In</h4>
+        <div className="flex flex-col items-center justify-center animate-in fade-in duration-1000 px-4">
+            <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em] mb-6 md:mb-8 animate-pulse text-center">Sanctuary Opens In</h4>
 
-            <div className="flex gap-4 md:gap-12 text-center">
-                <div className="flex flex-col items-center">
-                    <span className="serif text-4xl md:text-7xl text-stone-100 font-light mb-2">
+            <div className="flex gap-2 sm:gap-4 md:gap-12 text-center justify-center flex-wrap">
+                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[60px]">
+                    <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-100 font-light mb-2">
                         {String(timeLeft.days).padStart(2, '0')}
                     </span>
-                    <span className="text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Days</span>
+                    <span className="text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Days</span>
                 </div>
 
-                <span className="serif text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
+                <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
 
-                <div className="flex flex-col items-center">
-                    <span className="serif text-4xl md:text-7xl text-stone-100 font-light mb-2">
+                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[60px]">
+                    <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-100 font-light mb-2">
                         {String(timeLeft.hours).padStart(2, '0')}
                     </span>
-                    <span className="text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Hours</span>
+                    <span className="text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Hours</span>
                 </div>
 
-                <span className="serif text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
+                <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
 
-                <div className="flex flex-col items-center">
-                    <span className="serif text-4xl md:text-7xl text-stone-100 font-light mb-2">
+                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[60px]">
+                    <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-100 font-light mb-2">
                         {String(timeLeft.minutes).padStart(2, '0')}
                     </span>
-                    <span className="text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Minutes</span>
+                    <span className="text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Minutes</span>
                 </div>
 
-                <span className="serif text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
+                <span className="serif text-3xl sm:text-4xl md:text-7xl text-stone-600 font-thin mt-[-8px]">:</span>
 
-                <div className="flex flex-col items-center">
-                    <span className="serif text-4xl md:text-7xl text-amber-500 font-light mb-2 tabular-nums">
+                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[60px]">
+                    <span className="serif text-3xl sm:text-4xl md:text-7xl text-amber-500 font-light mb-2 tabular-nums">
                         {String(timeLeft.seconds).padStart(2, '0')}
                     </span>
-                    <span className="text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Seconds</span>
+                    <span className="text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-widest text-stone-500 font-bold">Seconds</span>
                 </div>
             </div>
         </div>

@@ -426,8 +426,8 @@ export default function AdminDashboard() {
                                                             key={hIdx}
                                                             title={`${HOURS[hIdx]}: ${count} intercessors`}
                                                             className={`aspect-square rounded-md border ${count === 0 ? 'bg-stone-900 border-white/5' :
-                                                                    count < 3 ? 'bg-amber-500/20 border-amber-500/20' :
-                                                                        'bg-amber-500 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                                                                count < 3 ? 'bg-amber-500/20 border-amber-500/20' :
+                                                                    'bg-amber-500 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
                                                                 }`}
                                                         />
                                                     )
