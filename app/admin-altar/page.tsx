@@ -30,12 +30,12 @@ interface UserData {
     createdAt: any
 }
 
-interface Commitment {
+interface Watch {
     id: string
-    dayIdx: number
-    hourIdx: string
+    hourIdx: number
     userName: string
     userId: string
+    timestamp?: any
 }
 
 interface Activity {
@@ -56,7 +56,7 @@ interface Prayer {
 
 export default function AdminDashboard() {
     const [users, setUsers] = useState<UserData[]>([])
-    const [commitments, setCommitments] = useState<Commitment[]>([])
+    const [watches, setWatches] = useState<Watch[]>([])
     const [activities, setActivities] = useState<Activity[]>([])
     const [prayers, setPrayers] = useState<Prayer[]>([])
     const [loading, setLoading] = useState(true)
@@ -95,20 +95,18 @@ export default function AdminDashboard() {
     const [currentTime, setCurrentTime] = useState(Date.now())
     const router = useRouter()
 
-    const deleteUserWatches = async (userId: string) => {
-        if (!confirm("Are you sure you want to clear all watches for this intercessor?")) return
+    const deleteUserWatch = async (userId: string) => {
+        if (!confirm("Are you sure you want to clear the watch for this intercessor?")) return
         if (!db) return
 
         try {
-            const q = query(collection(db, "commitments"), where("userId", "==", userId))
-            const snap = await getDocs(q)
+            const commitId = `watch_${userId}`
             const { deleteDoc } = await import('firebase/firestore')
-
-            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)))
-            alert("All watches cleared for this user.")
+            await deleteDoc(doc(db, "watches", commitId))
+            alert("Watch cleared for this user.")
         } catch (err) {
             console.error("Delete failed:", err)
-            alert("Failed to delete watches.")
+            alert("Failed to delete watch.")
         }
     }
 
@@ -158,16 +156,18 @@ export default function AdminDashboard() {
             setUsers(items)
         }, (err) => console.error("Users sync failed:", err))
 
-        const unsubCommitments = onSnapshot(collection(firestore, "commitments"), (snap) => {
-            setCommitments(snap.docs.map(doc => {
+        const unsubWatches = onSnapshot(collection(firestore, "watches"), (snap) => {
+            setWatches(snap.docs.map(doc => {
                 const data = doc.data()
                 return {
                     id: doc.id,
-                    ...data,
-                    userId: data.userId || data.uid
-                } as Commitment
+                    hourIdx: data.hourIdx,
+                    userName: data.userName,
+                    userId: data.userId,
+                    timestamp: data.timestamp
+                } as Watch
             }))
-        }, (err) => console.error("Commitments sync failed:", err))
+        }, (err) => console.error("Watches sync failed:", err))
 
         const unsubActivity = onSnapshot(query(collection(firestore, "activity"), orderBy("timestamp", "desc"), limit(50)), (snap) => {
             setActivities(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity)))
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
             }
         })
 
-        unsubRef.current = [unsubUsers, unsubCommitments, unsubActivity, unsubPrayers, unsubOnline]
+        unsubRef.current = [unsubUsers, unsubWatches, unsubActivity, unsubPrayers, unsubOnline]
     }
 
     const handleDeletePrayer = async (id: string) => {
@@ -236,10 +236,12 @@ export default function AdminDashboard() {
         document.body.removeChild(link)
     }
 
-    // Process Heatmap Data
-    const getCoverage = (day: number, hour: number) => {
-        return commitments.filter(c => c.dayIdx === day && parseInt(c.hourIdx) === hour).length
+    // Process Watch Coverage (24-hour based)
+    const getWatchCoverage = (hourIdx: number) => {
+        return watches.filter(w => w.hourIdx === hourIdx).length
     }
+
+    const totalWatchesCovered = new Set(watches.map(w => w.hourIdx)).size
 
     // Process Distribution Stats
     const getCountryStats = () => {
@@ -302,8 +304,8 @@ export default function AdminDashboard() {
                         <p className="text-2xl serif text-stone-100">{prayers.length}</p>
                     </div>
                     <div className="glass p-6 rounded-2xl border-stone-800">
-                        <span className="text-[8px] uppercase tracking-[0.2em] text-stone-500 font-bold mb-2 block">Slots Filled</span>
-                        <p className="text-2xl serif text-stone-100">{commitments.length}/72</p>
+                        <span className="text-[8px] uppercase tracking-[0.2em] text-stone-500 font-bold mb-2 block">Wall Coverage</span>
+                        <p className="text-2xl serif text-stone-100">{totalWatchesCovered}/24</p>
                     </div>
                 </div>
 
@@ -347,16 +349,21 @@ export default function AdminDashboard() {
                         <div className="glass p-8 rounded-3xl border-stone-800 text-center">
                             <h4 className="serif text-2xl text-stone-200 mb-6 font-light">Total Wall Integrity</h4>
                             <div className="flex items-center justify-center gap-6 mb-4">
-                                <span className="text-amber-500 serif text-4xl">{new Set(commitments.map(c => `${c.dayIdx}_${c.hourIdx}`)).size}</span>
-                                <span className="text-stone-700 text-2xl serif">/ 72</span>
+                                <span className="text-amber-500 serif text-4xl">{totalWatchesCovered}</span>
+                                <span className="text-stone-700 text-2xl serif">/ 24</span>
                                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500 ml-4">Hours Manned</span>
                             </div>
                             <div className="w-full h-2 bg-stone-900 rounded-full overflow-hidden border border-white/5 max-w-2xl mx-auto">
                                 <div
                                     className="h-full bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-1000"
-                                    style={{ width: `${(new Set(commitments.map(c => `${c.dayIdx}_${c.hourIdx}`)).size / 72) * 100}%` }}
+                                    style={{ width: `${(totalWatchesCovered / 24) * 100}%` }}
                                 />
                             </div>
+                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
+                                {totalWatchesCovered === 24
+                                    ? "The Wall is Complete! Slots are now open for additional intercessors."
+                                    : `Phase 1: ${24 - totalWatchesCovered} gaps remaining.`}
+                            </p>
                         </div>
 
                         {/* Gap List */}
@@ -367,11 +374,9 @@ export default function AdminDashboard() {
                                     <button
                                         onClick={() => {
                                             const gaps: string[] = []
-                                            DAYS.forEach((day, dIdx) => {
-                                                HOURS.forEach((hour, hIdx) => {
-                                                    const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
-                                                    if (count === 0) gaps.push(`${day}: ${hour.split(' - ')[0]}`)
-                                                })
+                                            HOURS.forEach((hour, hIdx) => {
+                                                const count = getWatchCoverage(hIdx)
+                                                if (count === 0) gaps.push(hour.split(' - ')[0])
                                             })
                                             const text = `🚨 *URGENT PRAYER GAPS*\nThe following hours are currently unmanned on the 72H Prayer Chain. We need watchmen to stand in the gap:\n\n${gaps.join('\n')}\n\nRegister now: ${window.location.origin}/schedule`
                                             navigator.clipboard.writeText(text)
@@ -384,12 +389,10 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="glass rounded-3xl border-stone-800 p-6 space-y-4 max-h-[600px] overflow-y-auto no-scrollbar">
                                     {(() => {
-                                        const gaps: any[] = []
-                                        DAYS.forEach((day, dIdx) => {
-                                            HOURS.forEach((hour, hIdx) => {
-                                                const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
-                                                if (count === 0) gaps.push({ day, hour, dIdx, hIdx })
-                                            })
+                                        const gaps: { hour: string, hIdx: number }[] = []
+                                        HOURS.forEach((hour, hIdx) => {
+                                            const count = getWatchCoverage(hIdx)
+                                            if (count === 0) gaps.push({ hour, hIdx })
                                         })
                                         return gaps.length === 0 ? (
                                             <div className="text-center py-12 text-stone-600 italic text-[10px] uppercase tracking-widest">
@@ -398,7 +401,7 @@ export default function AdminDashboard() {
                                         ) : gaps.map((gap, i) => (
                                             <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-red-900/30 transition-all">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none mb-1">{gap.day}</span>
+                                                    <span className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none mb-1">Watch {gap.hIdx + 1}</span>
                                                     <span className="text-xs text-stone-200">{gap.hour}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -415,26 +418,24 @@ export default function AdminDashboard() {
                             <div className="space-y-6">
                                 <h4 className="serif text-2xl text-stone-200">The Watch Grid</h4>
                                 <div className="glass rounded-3xl border-stone-800 p-8 flex flex-col gap-8">
-                                    {DAYS.map((day, dIdx) => (
-                                        <div key={day}>
-                                            <h5 className="text-[8px] font-black text-stone-600 uppercase tracking-[0.4em] mb-4">{day}</h5>
-                                            <div className="grid grid-cols-8 gap-2">
-                                                {HOURS.map((_, hIdx) => {
-                                                    const count = commitments.filter(c => c.dayIdx === dIdx && parseInt(c.hourIdx) === hIdx).length
-                                                    return (
-                                                        <div
-                                                            key={hIdx}
-                                                            title={`${HOURS[hIdx]}: ${count} intercessors`}
-                                                            className={`aspect-square rounded-md border ${count === 0 ? 'bg-stone-900 border-white/5' :
-                                                                count < 3 ? 'bg-amber-500/20 border-amber-500/20' :
-                                                                    'bg-amber-500 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                                                                }`}
-                                                        />
-                                                    )
-                                                })}
-                                            </div>
+                                    <div>
+                                        <h5 className="text-[8px] font-black text-stone-600 uppercase tracking-[0.4em] mb-4">24-Hour Coverage (All Days)</h5>
+                                        <div className="grid grid-cols-8 gap-2">
+                                            {HOURS.map((_, hIdx) => {
+                                                const count = getWatchCoverage(hIdx)
+                                                return (
+                                                    <div
+                                                        key={hIdx}
+                                                        title={`${HOURS[hIdx]}: ${count} intercessors`}
+                                                        className={`aspect-square rounded-md border ${count === 0 ? 'bg-stone-900 border-white/5' :
+                                                            count < 3 ? 'bg-amber-500/20 border-amber-500/20' :
+                                                                'bg-amber-500 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                                                            }`}
+                                                    />
+                                                )
+                                            })}
                                         </div>
-                                    ))}
+                                    </div>
                                     <div className="pt-6 border-t border-white/5 flex gap-6 justify-center">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 bg-stone-900 rounded-full" />
@@ -565,7 +566,8 @@ export default function AdminDashboard() {
                                                 const expiry = typeof s.expiry === 'object' && s.expiry?.toMillis ? s.expiry.toMillis() : s.expiry
                                                 return s.userId === u.id && expiry > currentTime
                                             })
-                                            const userWatchCount = commitments.filter(c => c.userId === u.id).length
+                                            const userWatch = watches.find(w => w.userId === u.id)
+                                            const userWatchCount = userWatch ? 1 : 0
 
                                             return (
                                                 <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
@@ -581,13 +583,13 @@ export default function AdminDashboard() {
                                                     <td className="p-6">
                                                         <div className="flex items-center justify-between group/row">
                                                             <span className={`text-[10px] font-bold ${userWatchCount > 0 ? 'text-amber-500' : 'text-stone-700'}`}>
-                                                                {userWatchCount} Watches
+                                                                {userWatchCount} Watch
                                                             </span>
                                                             {userWatchCount > 0 && (
                                                                 <button
-                                                                    onClick={() => deleteUserWatches(u.id)}
+                                                                    onClick={() => deleteUserWatch(u.id)}
                                                                     className="opacity-0 group-hover/row:opacity-100 p-1 text-red-900 hover:text-red-500 transition-all"
-                                                                    title="Clear all watches"
+                                                                    title="Clear watch"
                                                                 >
                                                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -732,8 +734,8 @@ export default function AdminDashboard() {
                             <span className="text-xs text-stone-300 font-bold">{users.length}</span>
                         </div>
                         <div>
-                            <span className="text-[8px] text-stone-600 block mb-1 uppercase font-bold">Commitments</span>
-                            <span className="text-xs text-stone-300 font-bold">{commitments.length}</span>
+                            <span className="text-[8px] text-stone-600 block mb-1 uppercase font-bold">Watches</span>
+                            <span className="text-xs text-stone-300 font-bold">{watches.length}</span>
                         </div>
                         <div>
                             <span className="text-[8px] text-stone-600 block mb-1 uppercase font-bold">Prayers</span>

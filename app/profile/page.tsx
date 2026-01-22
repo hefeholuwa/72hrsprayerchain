@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { auth, db, signOut, isFirebaseAvailable } from '@/lib/firebase'
 import { doc, getDoc, collection, query, where, getDocs, setDoc, orderBy } from 'firebase/firestore'
-import { DAYS, HOURS } from '@/lib/constants'
+import { HOURS } from '@/lib/constants'
 
 export default function ProfilePage() {
     const [userData, setUserData] = useState<any>(null)
-    const [commitments, setCommitments] = useState<any[]>([])
+    const [myWatch, setMyWatch] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [editing, setEditing] = useState(false)
     const [newName, setNewName] = useState('')
@@ -34,15 +34,14 @@ export default function ProfilePage() {
                     setNewLocation(data.location || '')
                 }
 
-                // 2. Fetch Watch History
-                const q = query(
-                    collection(db, "commitments"),
-                    where("userId", "==", auth.currentUser.uid),
-                    orderBy("timestamp", "desc")
-                )
-                const watchSnap = await getDocs(q)
-                const watches = watchSnap.docs.map(d => d.data())
-                setCommitments(watches)
+                // 2. Fetch User's Watch
+                const watchDocId = `watch_${auth.currentUser.uid}`
+                const watchSnap = await getDoc(doc(db, "watches", watchDocId))
+                if (watchSnap.exists()) {
+                    setMyWatch(watchSnap.data())
+                } else {
+                    setMyWatch(null)
+                }
 
             } catch (err) {
                 console.error("Profile fetch error:", err)
@@ -188,24 +187,22 @@ export default function ProfilePage() {
                                 </Link>
                             </div>
 
-                            {commitments.length === 0 ? (
+                            {!myWatch ? (
                                 <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl">
-                                    <p className="text-stone-500 text-sm italic font-light">No watches recorded yet in the scrolls.</p>
+                                    <p className="text-stone-500 text-sm italic font-light">No watch recorded yet in the scrolls.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {commitments.map((w, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:border-amber-500/30 transition-all">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{DAYS[w.dayIdx]}</span>
-                                                <span className="text-stone-200 font-light">{HOURS[parseInt(w.hourIdx)]}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-[9px] text-stone-500 block uppercase tracking-tighter">Status</span>
-                                                <span className="text-[10px] text-stone-300 font-bold uppercase tracking-widest">Confirmed</span>
-                                            </div>
+                                    <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:border-amber-500/30 transition-all">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">All Days</span>
+                                            <span className="text-stone-200 font-light">{HOURS[myWatch.hourIdx]}</span>
                                         </div>
-                                    ))}
+                                        <div className="text-right">
+                                            <span className="text-[9px] text-stone-500 block uppercase tracking-tighter">Status</span>
+                                            <span className="text-[10px] text-stone-300 font-bold uppercase tracking-widest">Confirmed</span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
