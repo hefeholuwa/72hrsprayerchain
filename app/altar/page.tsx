@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PRAYER_ROOM_URL, ORGANIZATION } from '@/lib/constants'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
+import { collection, query, where, getDocs, limit } from 'firebase/firestore'
 import { useSanctuary } from '@/hooks/useSanctuary'
 import { usePrayerTheme } from '@/hooks/usePrayerTheme'
 
 export default function AltarRoom() {
+    const router = useRouter()
     const [user, setUser] = useState<any>(null)
     const [userName, setUserName] = useState<string>('Intercessor')
+    const [loading, setLoading] = useState(true)
     const [showVocalRoom, setShowVocalRoom] = useState(false)
     const [vocalMinimized, setVocalMinimized] = useState(false)
     const [promptingText, setPromptingText] = useState('')
@@ -37,13 +41,51 @@ export default function AltarRoom() {
 
     useEffect(() => {
         const unsub = auth?.onAuthStateChanged(async (u) => {
+            if (!u) {
+                router.push('/enter')
+                return
+            }
+
+            // Check for registration (commitment)
+            if (db) {
+                try {
+                    const q = query(
+                        collection(db, "commitments"),
+                        where("userId", "==", u.uid),
+                        limit(1)
+                    );
+                    const snapshot = await getDocs(q);
+                    if (snapshot.empty) {
+                        // Not registered (no commitment), send back to gate
+                        router.push('/enter')
+                        return
+                    }
+                } catch (err) {
+                    console.error("Access verification failed:", err);
+                    // Silently fail or redirect? For now, let's be strict.
+                    // But if it's a transient firestore error, we might lock them out.
+                    // Given previous 500 issues, let's just log and continue for now
+                    // OR redirect if we are sure it's a permission/auth issue.
+                }
+            }
+
             setUser(u)
             if (u && u.displayName) {
                 setUserName(u.displayName)
             }
+            setLoading(false)
         })
         return () => unsub?.()
-    }, [])
+    }, [router])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
+                <div className="w-12 h-12 border-t-2 border-amber-500 rounded-full animate-spin mb-6"></div>
+                <p className="text-stone-500 text-[10px] uppercase tracking-[0.4em] font-black">Verifying Entrance...</p>
+            </div>
+        )
+    }
 
 
     return (

@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // --- USERS COLLECTION ---
     match /users/{uid} {
-      allow read: if true; // Allowed for profile display/presence
+      allow read: if request.auth != null; 
       allow create: if request.auth != null && isOwner(uid);
       allow update: if request.auth != null && isOwner(uid);
       allow delete: if isAdmin();
@@ -24,7 +24,7 @@ service cloud.firestore {
 
     // --- COMMITMENTS COLLECTION ---
     match /commitments/{commitId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create: if request.auth != null && 
         request.resource.data.userId == request.auth.uid;
       allow delete: if request.auth != null && 
@@ -33,14 +33,14 @@ service cloud.firestore {
 
     // --- ACTIVITY COLLECTION ---
     match /activity/{actId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update, delete: if isAdmin();
     }
 
     // --- PRAYERS COLLECTION ---
     match /prayers/{prayerId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create: if request.auth != null && 
         request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && 
@@ -50,25 +50,25 @@ service cloud.firestore {
 
     // --- ACTIVE SESSIONS (PRESENCE) ---
     match /active_sessions/{uid} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if request.auth != null && isOwner(uid);
     }
 
     // --- ALTAR INTERACTIONS (BURSTS, PROMPTINGS, FOCUS) ---
     match /altar_interactions/{docId} {
-      allow read: if true;
-      allow create: if true; // Allow anonymous reactions in Altar Room
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
     }
 
     // --- WATCHES (24-HOUR WATCH COMMITMENTS) ---
     match /watches/{watchId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Handle specific watchId logic in code
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
 
     // --- CONFIGURATION ---
     match /config/{docId} {
-      allow read: if true;
+      allow read: if true; // Public read for start date
       allow write: if isAdmin();
     }
   }
