@@ -79,6 +79,15 @@ export default function SchedulePage() {
             return
         }
 
+        const count = commitments[hourIdx] || 0
+        const isWallFull = totalWatchesCovered === 24
+
+        // If wall is not full and slot is taken by someone else, it's locked
+        if (!isWallFull && count > 0 && myWatch !== hourIdx) {
+            showNotification("This gap is already filled. Please choose an open slot to complete the wall.", 'info')
+            return
+        }
+
         // Each user can only have one watch
         const commitId = `watch_${auth.currentUser.uid}`
         const docRef = doc(db, "watches", commitId)
@@ -138,8 +147,10 @@ export default function SchedulePage() {
                                     style={{ width: `${(totalWatchesCovered / 24) * 100}%` }}
                                 />
                             </div>
-                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
-                                {totalWatchesCovered === 24 ? "The Wall is Complete!" : `${24 - totalWatchesCovered} watches still need a watchman.`}
+                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold text-center px-4 leading-relaxed">
+                                {totalWatchesCovered === 24
+                                    ? "The Wall is Complete! Slots are now open for additional intercessors."
+                                    : `Phase 1: ${24 - totalWatchesCovered} gaps remaining. Each slot is strictly 1 intercessor until the wall is covered.`}
                             </p>
                         </div>
                     )}
@@ -156,14 +167,18 @@ export default function SchedulePage() {
                         const count = usingSimulation ? getSimulatedOccupancy(0, idx) : (commitments[idx] || 0)
                         const isMine = myWatch === idx
                         const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
+                        const isWallFull = totalWatchesCovered === 24
+                        const isLocked = !isWallFull && count > 0 && !isMine
 
                         return (
                             <button
                                 key={idx}
+                                disabled={isLocked}
                                 onClick={() => toggleCommit(idx)}
                                 className={`group relative p-6 glass rounded-2xl transition-all text-left overflow-hidden border-stone-800
                                 ${isCurrentWatch ? 'ring-2 ring-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 'hover:border-stone-700 hover:bg-white/5'} 
-                                ${isMine ? 'ring-1 ring-stone-100/20' : ''}`}
+                                ${isMine ? 'ring-1 ring-stone-100/20' : ''}
+                                ${isLocked ? 'opacity-40 cursor-not-allowed grayscale-[0.8]' : ''}`}
                             >
                                 {isCurrentWatch && (
                                     <div className="absolute top-0 right-0 p-2">
@@ -186,8 +201,8 @@ export default function SchedulePage() {
                                     <div className="flex items-center justify-between mt-6">
                                         <div className="flex flex-col">
                                             <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors
-                                                ${isMine ? 'text-stone-100' : count === 0 ? 'text-amber-500/80 animate-pulse' : 'text-stone-600 group-hover:text-amber-500/80'}`}>
-                                                {isMine ? 'Your Watch' : count === 0 ? 'Fill this Gap' : 'Join Watch'}
+                                                ${isMine ? 'text-stone-100' : isLocked ? 'text-stone-700' : count === 0 ? 'text-amber-500/80 animate-pulse' : 'text-stone-600 group-hover:text-amber-500/80'}`}>
+                                                {isMine ? 'Your Watch' : isLocked ? 'Watch Occupied' : count === 0 ? 'Fill this Gap' : 'Join Watch'}
                                             </span>
                                             {count === 0 && !isMine && (
                                                 <span className="text-[7px] text-amber-500/40 font-black uppercase tracking-tighter mt-1 animate-pulse">Urgent Coverage Needed</span>
@@ -195,6 +210,11 @@ export default function SchedulePage() {
                                         </div>
                                         {isCurrentWatch && (
                                             <span className="text-[8px] text-amber-500/60 font-black uppercase tracking-widest italic">Current</span>
+                                        )}
+                                        {isLocked && (
+                                            <svg className="w-3 h-3 text-stone-700" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                            </svg>
                                         )}
                                     </div>
                                 </div>
