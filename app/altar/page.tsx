@@ -278,32 +278,30 @@ export default function AltarRoom() {
 
                     {/* Minimized Floating Bar */}
                     {vocalMinimized && (
-                        <div className="fixed top-8 right-8 z-50 animate-in slide-in-from-top duration-500">
-                            <div className="flex items-center gap-4 px-5 py-2.5 glass rounded-full border border-stone-800 hover:border-amber-500/20 transition-all group bg-black/40 backdrop-blur-xl">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-300 font-bold">Vocal Room</span>
+                        <div className="fixed top-24 right-6 md:top-8 md:right-12 z-50 animate-in slide-in-from-top duration-500">
+                            <div className="flex items-center gap-3 px-4 py-2 glass rounded-full border border-stone-800 hover:border-amber-500/30 transition-all bg-black/60 backdrop-blur-2xl shadow-2xl">
+                                <div className="flex items-center gap-2 pr-2 border-r border-stone-800">
+                                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-stone-200 font-black">Live Room</span>
                                 </div>
 
-                                <div className="h-4 w-px bg-stone-800 mx-1" />
-
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                     <button
                                         onClick={() => setVocalMinimized(false)}
-                                        className="p-1 text-stone-500 hover:text-amber-500 transition-colors"
+                                        className="p-1.5 text-stone-500 hover:text-amber-500 transition-colors"
                                         title="Expand"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" />
                                         </svg>
                                     </button>
                                     <button
                                         onClick={() => setShowVocalRoom(false)}
-                                        className="p-1 text-stone-500 hover:text-red-400 transition-colors"
+                                        className="p-1.5 text-stone-500 hover:text-red-400 transition-colors"
                                         title="Leave"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
                                 </div>
