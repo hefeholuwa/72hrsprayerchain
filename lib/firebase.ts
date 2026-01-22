@@ -9,7 +9,8 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut
+  signOut,
+  sendPasswordResetEmail
 } from 'firebase/auth'
 import {
   getFirestore,
@@ -65,6 +66,7 @@ export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
   firebaseOnAuthStateChanged as onAuthStateChanged
 }
 

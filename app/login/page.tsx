@@ -68,7 +68,7 @@ function LoginForm() {
                     />
                 </div>
 
-                <div>
+                <div className="relative">
                     <label className="block text-[9px] uppercase tracking-[0.3em] text-stone-500 mb-2 font-black">Password</label>
                     <input
                         type="password"
@@ -78,6 +78,11 @@ function LoginForm() {
                         placeholder="••••••••"
                         required
                     />
+                    <div className="flex justify-end mt-2">
+                        <Link href="/forgot-password" title="Reset Password" className="text-[9px] uppercase tracking-widest text-amber-500/60 hover:text-amber-500 transition-colors font-bold">
+                            Forgot Password?
+                        </Link>
+                    </div>
                 </div>
 
                 <button
