@@ -188,7 +188,7 @@ export default function LandingPage() {
                         <span className="italic text-amber-500 font-light drop-shadow-2xl opacity-90">Prayer Chain.</span>
                     </h2>
                     <p className="text-stone-500 text-xs md:text-lg font-light tracking-wide max-w-lg leading-relaxed italic">
-                        A continuous global vigil of intercession, worship, and spiritual warfare.
+                        A continuous global wave of intercession, worship, and spiritual warfare.
                     </p>
                 </div>
 
