@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { HOURS, getCurrentWatch, getSimulatedOccupancy } from '@/lib/constants'
+import { HOURS, getCurrentWatch, getSimulatedOccupancy, ADMIN_EMAILS } from '@/lib/constants'
 import { useEventTiming } from '@/hooks/useEventTiming'
 import { auth, db, isFirebaseAvailable } from '@/lib/firebase'
 import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, deleteDoc } from "firebase/firestore"
@@ -10,13 +10,16 @@ import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, deleteDoc 
 export default function SchedulePage() {
     const { isStarted } = useEventTiming()
     const currentWatch = getCurrentWatch()
+    const [user, setUser] = useState<any>(null)
     const [commitments, setCommitments] = useState<Record<string, number>>({})
     const [totalWatchesCovered, setTotalWatchesCovered] = useState(0)
-    const [myWatch, setMyWatch] = useState<number | null>(null)
+    const [myWatches, setMyWatches] = useState<number[]>([])
     const [usingSimulation, setUsingSimulation] = useState(true)
     const [mounted, setMounted] = useState(false)
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null)
     const router = useRouter()
+
+    const isAdmin = user?.email ? ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase()) : false
 
     const showNotification = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
         setNotification({ message, type })
@@ -28,6 +31,11 @@ export default function SchedulePage() {
         if (isFirebaseAvailable) {
             setUsingSimulation(false)
         }
+
+        const unsub = auth?.onAuthStateChanged(u => {
+            setUser(u)
+        })
+        return () => unsub?.()
     }, [])
 
     useEffect(() => {
@@ -42,21 +50,21 @@ export default function SchedulePage() {
             (snapshot) => {
                 const counts: Record<string, number> = {}
                 const coveredWatches = new Set<number>()
-                let userWatch: number | null = null
+                const userWatches: number[] = []
 
                 snapshot.forEach(d => {
                     const data = d.data()
                     const hourIdx = data.hourIdx as number
                     counts[hourIdx] = (counts[hourIdx] || 0) + 1
                     coveredWatches.add(hourIdx)
-                    if (auth?.currentUser && data.userId === auth.currentUser.uid) {
-                        userWatch = hourIdx
+                    if (user && data.userId === user.uid) {
+                        userWatches.push(hourIdx)
                     }
                 })
 
                 setCommitments(counts)
                 setTotalWatchesCovered(coveredWatches.size)
-                setMyWatch(userWatch)
+                setMyWatches(userWatches)
                 setUsingSimulation(false)
             },
             (error) => {
@@ -66,10 +74,10 @@ export default function SchedulePage() {
         )
 
         return () => unsub()
-    }, [])
+    }, [user])
 
     const toggleCommit = async (hourIdx: number) => {
-        if (!auth?.currentUser) {
+        if (!user) {
             router.push('/login?redirect=/schedule')
             return
         }
@@ -81,24 +89,43 @@ export default function SchedulePage() {
 
         const count = commitments[hourIdx] || 0
         const isWallFull = totalWatchesCovered === 24
+        const isMine = myWatches.includes(hourIdx)
 
-        // If wall is not full and slot is taken by someone else, it's locked
-        if (!isWallFull && count > 0 && myWatch !== hourIdx) {
-            showNotification("This gap is already filled. Please choose an open slot to complete the wall.", 'info')
-            return
+        // If not admin, enforce restrictions
+        if (!isAdmin) {
+            // If wall is full, lock all slots for regular users
+            if (isWallFull && !isMine) {
+                showNotification("The Wall is complete. Slots are locked until further notice.", 'info')
+                return
+            }
+            // If wall is not full and slot is taken by someone else, it's locked
+            if (!isWallFull && count > 0 && !isMine) {
+                showNotification("This gap is already filled. Please choose an open slot to complete the wall.", 'info')
+                return
+            }
         }
 
-        // Each user can only have one watch
-        const commitId = `watch_${auth.currentUser.uid}`
+        // Admin uses unique IDs for multiple watches, regular users use one ID to overwrite
+        const commitId = isAdmin ? `watch_${user.uid}_${hourIdx}` : `watch_${user.uid}`
         const docRef = doc(db, "watches", commitId)
 
-        // If already registered for this watch, do nothing
-        if (myWatch === hourIdx) return
+        // If already registered for this watch, toggle it off for admins or do nothing for users
+        if (isMine) {
+            try {
+                await deleteDoc(docRef)
+                showNotification("Watch removed.")
+                return
+            } catch (e) {
+                console.error("Removal failed", e)
+                showNotification("Failed to remove watch.", 'error')
+                return
+            }
+        }
 
         try {
             await setDoc(docRef, {
-                userId: auth.currentUser.uid,
-                userName: auth.currentUser.displayName || "A Watchman",
+                userId: user.uid,
+                userName: user.displayName || "A Watchman",
                 hourIdx: hourIdx,
                 timestamp: serverTimestamp()
             })
@@ -106,7 +133,7 @@ export default function SchedulePage() {
             // Record activity
             const { addDoc } = await import('firebase/firestore')
             await addDoc(collection(db, "activity"), {
-                userName: auth.currentUser.displayName || "A Watchman",
+                userName: user.displayName || "A Watchman",
                 type: "commitment",
                 timestamp: serverTimestamp()
             })
@@ -132,6 +159,12 @@ export default function SchedulePage() {
 
             <div className="relative z-10 max-w-4xl mx-auto animate-in fade-in duration-1000 slide-in-from-bottom-8">
                 <div className="text-center mb-16">
+                    {isAdmin && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 mb-6 animate-in slide-in-from-top-4 duration-500">
+                            <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-black text-amber-500">Admin Mode Active</span>
+                        </div>
+                    )}
                     <h2 className="serif text-4xl text-stone-100 mb-6 font-light tracking-tight">The Watchman&apos;s Grid</h2>
 
                     {/* Coverage Indicator */}
@@ -149,7 +182,7 @@ export default function SchedulePage() {
                             </div>
                             <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold text-center px-4 leading-relaxed">
                                 {totalWatchesCovered === 24
-                                    ? "The Wall is Complete! Slots are now open for additional intercessors."
+                                    ? "The Wall is Complete! Slots are now locked until further notice."
                                     : `Phase 1: ${24 - totalWatchesCovered} gaps remaining. Each slot is strictly 1 intercessor until the wall is covered.`}
                             </p>
                         </div>
@@ -165,10 +198,10 @@ export default function SchedulePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {HOURS.map((hour, idx) => {
                         const count = usingSimulation ? getSimulatedOccupancy(0, idx) : (commitments[idx] || 0)
-                        const isMine = myWatch === idx
+                        const isMine = myWatches.includes(idx)
                         const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
                         const isWallFull = totalWatchesCovered === 24
-                        const isLocked = !isWallFull && count > 0 && !isMine
+                        const isLocked = !isAdmin && (count > 0 && !isMine)
 
                         return (
                             <button

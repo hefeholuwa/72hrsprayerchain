@@ -216,15 +216,23 @@ export default function AdminDashboard() {
     }
 
     const exportToCSV = () => {
-        const headers = ["Name", "Email", "Location", "Joined At"]
-        const rows = users.map(u => [
-            u.name,
-            u.email,
-            u.location,
-            u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : ""
-        ])
+        const headers = ["Name", "Email", "Location", "Joined At", "Watches"]
+        const rows = users.map(u => {
+            const userWatches = watches
+                .filter(w => w.userId === u.id)
+                .map(w => HOURS[w.hourIdx])
+                .join("; ")
 
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n")
+            return [
+                u.name,
+                u.email,
+                u.location,
+                u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : "",
+                userWatches
+            ]
+        })
+
+        const csvContent = [headers, ...rows].map(e => e.map(cell => `"${(cell || "").toString().replace(/"/g, '""')}"`).join(",")).join("\n")
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
         const link = document.createElement("a")
         const url = URL.createObjectURL(blob)
