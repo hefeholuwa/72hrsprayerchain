@@ -250,10 +250,15 @@ export default function LandingPage() {
                             <div className="flex justify-between items-end mb-3">
                                 <div>
                                     <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.3em] block mb-1">72H Progress</span>
-                                    <span className="font-serif text-xl md:text-2xl text-stone-100 font-light">{progress}%</span>
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="font-serif text-2xl md:text-3xl text-stone-100 font-light">{progress}%</span>
+                                        <div className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                                            <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Hour {dynamicWatch.totalHoursElapsed + 1} of 72</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <span className="text-[10px] text-stone-500 font-medium tracking-wide">
-                                    Hour {Math.floor((progress / 100) * 72)} of 72
+                                    {(72 - dynamicWatch.totalHoursElapsed)} Hours Remaining
                                 </span>
                             </div>
                             <div className="h-2 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/[0.06]">

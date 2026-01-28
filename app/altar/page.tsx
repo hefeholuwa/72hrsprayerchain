@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { PRAYER_ROOM_URL, ORGANIZATION } from '@/lib/constants'
 import { auth } from '@/lib/firebase'
 import { useSanctuary } from '@/hooks/useSanctuary'
+import { useEventTiming } from '@/hooks/useEventTiming'
 import { usePrayerTheme } from '@/hooks/usePrayerTheme'
 
 export default function AltarRoom() {
@@ -38,6 +39,11 @@ export default function AltarRoom() {
         userId: user?.uid || undefined,
         userName: userName
     })
+
+    const {
+        isStarted,
+        currentWatch: timingWatch
+    } = useEventTiming()
 
     useEffect(() => {
         setMounted(true)
@@ -167,17 +173,27 @@ export default function AltarRoom() {
             {/* === HEADER === */}
             <header className="fixed top-0 left-0 right-0 z-40">
                 <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6">
-                    <Link
-                        href="/"
-                        className="group flex items-center gap-2 text-stone-600 hover:text-amber-500 transition-colors cursor-pointer"
-                    >
-                        <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] font-medium hidden sm:inline">
-                            Return
-                        </span>
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/"
+                            className="group flex items-center gap-2 text-stone-600 hover:text-amber-500 transition-colors cursor-pointer"
+                        >
+                            <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] font-medium hidden sm:inline">
+                                Return
+                            </span>
+                        </Link>
+
+                        {isStarted && (
+                            <div className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                                <span className="text-[9px] md:text-[10px] text-amber-500 font-bold uppercase tracking-widest">
+                                    Hour {timingWatch.totalHoursElapsed + 1} / 72
+                                </span>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Connection Status Pill */}
                     <div className="flex items-center gap-3">
