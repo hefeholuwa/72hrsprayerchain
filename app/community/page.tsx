@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { auth, db, isFirebaseAvailable } from '@/lib/firebase'
 import {
     collection,
@@ -103,84 +104,143 @@ export default function PrayerWall() {
     }
 
     return (
-        <div className="relative min-h-screen py-12 px-4 animate-in fade-in duration-700">
-            <div className="max-w-2xl mx-auto">
-                <div className="text-center mb-16">
-                    <h2 className="serif text-4xl text-stone-100 mb-4">Prayer Wall</h2>
-                    <p className="text-stone-500 text-[10px] uppercase tracking-[0.4em] font-black">Bearing one another&apos;s burdens</p>
-                </div>
-
-                {/* Post Box */}
-                <div className="glass p-8 rounded-3xl border-stone-800 mb-16 relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/10 to-transparent rounded-3xl blur group-hover:opacity-100 transition duration-1000" />
-                    <form onSubmit={handlePost} className="relative z-10">
-                        <textarea
-                            value={newPrayer}
-                            onChange={(e) => setNewPrayer(e.target.value)}
-                            placeholder="What is your prayer burden?"
-                            className="w-full bg-transparent border-none text-stone-200 placeholder:text-stone-700 text-lg serif focus:outline-none min-h-[120px] resize-none"
-                            maxLength={280}
-                        />
-                        <div className="flex justify-between items-center mt-6 border-t border-white/5 pt-6">
-                            <span className="text-[9px] text-stone-600 font-bold uppercase tracking-widest">
-                                {newPrayer.length}/280
-                            </span>
-                            <button
-                                type="submit"
-                                disabled={posting || !newPrayer.trim()}
-                                className="px-8 py-3 bg-stone-100 text-[#050505] rounded-full uppercase text-[9px] font-black tracking-[0.2em] hover:bg-white transition-all disabled:opacity-50 shadow-xl shadow-stone-950/50"
-                            >
-                                {posting ? 'Posting...' : 'Post Burden'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {/* Prayer List */}
-                <div className="space-y-6 pb-24">
-                    {prayers.map((prayer) => (
-                        <div key={prayer.id} className="p-6 glass rounded-2xl border-stone-800 hover:border-amber-500/20 transition-all group animate-in slide-in-from-bottom-2">
-                            <div className="flex justify-between items-start mb-4">
-                                <span className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.2em]">
-                                    {prayer.userName}
-                                </span>
-                                <span className="text-[8px] text-stone-600 font-bold uppercase tracking-tighter">
-                                    {prayer.timestamp?.toDate ? new Date(prayer.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending...'}
-                                </span>
-                            </div>
-                            <p className="text-stone-300 text-[15px] font-light leading-relaxed mb-6 italic">
-                                &ldquo;{prayer.content}&rdquo;
-                            </p>
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={() => handleAmen(prayer.id, prayer.amenedBy)}
-                                    disabled={user && prayer.amenedBy.includes(user.uid)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border
-                                        ${user && prayer.amenedBy.includes(user.uid)
-                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
-                                            : 'border-white/5 text-stone-500 hover:border-stone-700 hover:text-stone-300'}`}
-                                >
-                                    <span className={`w-1.5 h-1.5 rounded-full ${user && prayer.amenedBy.includes(user.uid) ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'bg-stone-800'}`}></span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest">
-                                        {user && prayer.amenedBy.includes(user.uid) ? 'Standing In Amen' : 'Amen'}
-                                    </span>
-                                </button>
-                                {prayer.amenCount > 0 && (
-                                    <span className="text-[8px] md:text-[9px] text-stone-600 font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] leading-tight">
-                                        {prayer.amenCount} intercessors standing with you
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-
-                    {prayers.length === 0 && (
-                        <div className="text-center py-24 border border-dashed border-stone-800 rounded-3xl">
-                            <p className="text-stone-600 text-[10px] uppercase tracking-[0.4em] font-black">The wall is quiet. Be the first to post.</p>
-                        </div>
-                    )}
-                </div>
+        <div className="relative min-h-screen">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-[30%] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full aura-glow opacity-30" />
+                <div className="absolute inset-0 opacity-[0.015] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3QgZmlsdGVyPSJ1cmwoI2EpIiBoZWlnaHQ9IjEwMCUiIHdpZHRoPSIxMDAlIi8+PC9zdmc+')]" />
             </div>
+
+            {/* Fixed Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.04]">
+                <div className="max-w-2xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span className="text-xs font-medium hidden sm:inline">Back</span>
+                    </Link>
+
+                    <h1 className="font-serif text-lg md:text-xl text-stone-100 font-light">Prayer Wall</h1>
+
+                    <div className="w-16" />
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="relative z-10 pt-24 pb-32 px-4 md:px-8">
+                <div className="max-w-2xl mx-auto">
+
+                    {/* Header */}
+                    <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <p className="text-stone-500 text-sm italic">
+                            "Bear one another&apos;s burdens, and so fulfill the law of Christ."
+                        </p>
+                    </div>
+
+                    {/* Post Box */}
+                    <div className="glass-card p-6 md:p-8 rounded-2xl mb-10 relative group animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <form onSubmit={handlePost}>
+                            <textarea
+                                value={newPrayer}
+                                onChange={(e) => setNewPrayer(e.target.value)}
+                                placeholder="Share your prayer burden..."
+                                className="w-full bg-transparent border-none text-stone-200 placeholder:text-stone-600 text-base font-light focus:outline-none min-h-[100px] resize-none leading-relaxed"
+                                maxLength={280}
+                            />
+                            <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/[0.06]">
+                                <span className="text-[10px] text-stone-600 font-medium">
+                                    {newPrayer.length}/280
+                                </span>
+                                <button
+                                    type="submit"
+                                    disabled={posting || !newPrayer.trim()}
+                                    className="px-6 py-2.5 bg-stone-100 text-[#0a0a0f] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-black/20"
+                                >
+                                    {posting ? 'Posting...' : 'Share'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Prayer List */}
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                        {prayers.map((prayer, idx) => (
+                            <div
+                                key={prayer.id}
+                                className="glass-card p-5 md:p-6 rounded-xl hover:border-white/[0.12] transition-all"
+                                style={{ animationDelay: `${idx * 50}ms` }}
+                            >
+                                {/* Header */}
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+                                            <span className="text-xs text-amber-500 font-medium">
+                                                {prayer.userName?.[0] || 'I'}
+                                            </span>
+                                        </div>
+                                        <span className="text-sm font-medium text-stone-300">
+                                            {prayer.userName}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] text-stone-600">
+                                        {prayer.timestamp?.toDate ?
+                                            new Date(prayer.timestamp.toDate()).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })
+                                            : 'Just now'}
+                                    </span>
+                                </div>
+
+                                {/* Content */}
+                                <p className="text-stone-300 text-sm leading-relaxed mb-5">
+                                    {prayer.content}
+                                </p>
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleAmen(prayer.id, prayer.amenedBy)}
+                                        disabled={user && prayer.amenedBy.includes(user.uid)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all cursor-pointer
+                                            ${user && prayer.amenedBy.includes(user.uid)
+                                                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-500'
+                                                : 'bg-white/[0.03] border border-white/[0.08] text-stone-500 hover:bg-white/[0.06] hover:text-stone-300'
+                                            }`}
+                                    >
+                                        <span className={`w-1.5 h-1.5 rounded-full ${user && prayer.amenedBy.includes(user.uid)
+                                                ? 'bg-amber-500'
+                                                : 'bg-stone-600'
+                                            }`} />
+                                        <span className="text-xs font-medium">
+                                            {user && prayer.amenedBy.includes(user.uid) ? 'Amen ✓' : 'Amen'}
+                                        </span>
+                                    </button>
+                                    {prayer.amenCount > 0 && (
+                                        <span className="text-[11px] text-stone-600">
+                                            {prayer.amenCount} {prayer.amenCount === 1 ? 'person' : 'people'} praying
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {prayers.length === 0 && (
+                            <div className="text-center py-16 border border-dashed border-white/[0.08] rounded-2xl">
+                                <svg className="w-12 h-12 text-stone-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg>
+                                <p className="text-stone-500 text-sm mb-2">The wall is quiet</p>
+                                <p className="text-stone-600 text-xs">Be the first to share a prayer burden</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
         </div>
     )
 }

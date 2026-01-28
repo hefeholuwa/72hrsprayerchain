@@ -17,7 +17,7 @@ import {
     Timestamp
 } from 'firebase/firestore'
 
-type EmojiType = '🔥' | '🙏' | '🙌'
+type EmojiType = '🔥' | '🙏' | '🙌' | '❤️' | '✨'
 
 interface Burst {
     id: string

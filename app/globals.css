@@ -2,71 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== DESIGN TOKENS ===== */
 :root {
-  --obsidian: #050505;
-  --amber-aura: rgba(217, 119, 6, 0.15);
+  /* Core Colors */
+  --obsidian: #0a0a0f;
+  --obsidian-deep: #050508;
+  
+  /* Amber/Gold Theme */
   --amber-core: #f59e0b;
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --amber-glow: rgba(245, 158, 11, 0.15);
+  --amber-soft: rgba(245, 158, 11, 0.08);
+  
+  /* Glass Morphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-hover: rgba(255, 255, 255, 0.05);
+  --glass-active: rgba(255, 255, 255, 0.08);
+  
+  /* Text Colors */
+  --text-primary: #f5f5f4;
+  --text-secondary: #a8a29e;
+  --text-muted: #78716c;
 }
 
+/* ===== BASE STYLES ===== */
 body {
   background-color: var(--obsidian);
-  color: #f5f5f4;
-  /* stone-100 */
-  font-family: var(--font-inter), sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.font-serif {
-  font-family: var(--font-playfair), serif;
-}
-
+/* ===== TYPOGRAPHY ===== */
+.font-serif,
 .serif {
-  font-family: var(--font-playfair), serif;
+  font-family: var(--font-playfair), Georgia, serif;
 }
 
-/* Glassmorphism */
+/* ===== GLASS MORPHISM UTILITIES ===== */
 .glass {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
 }
 
-/* Eternal Flame Animations */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.glass-button {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease-out;
+}
+
+.glass-button:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.glass-button:active {
+  background: var(--glass-active);
+  transform: scale(0.98);
+}
+
+/* ===== AMBIENT EFFECTS ===== */
 @keyframes pulse-glow {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
-    opacity: 0.5;
-    filter: blur(40px);
+    opacity: 0.4;
   }
-
   50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-    filter: blur(60px);
+    transform: scale(1.05);
+    opacity: 0.6;
   }
 }
 
 @keyframes flame-drift {
-  0% {
+  0%, 100% {
     transform: translateY(0) rotate(0deg);
   }
-
   50% {
-    transform: translateY(-10px) rotate(2deg);
+    transform: translateY(-8px) rotate(1deg);
   }
+}
 
-  100% {
-    transform: translateY(0) rotate(0deg);
+@keyframes subtle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
   }
 }
 
 .aura-glow {
-  background: radial-gradient(circle, var(--amber-aura) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
   animation: pulse-glow 8s ease-in-out infinite;
 }
 
@@ -74,13 +114,79 @@ body {
   animation: flame-drift 6s ease-in-out infinite;
 }
 
-/* Hide scrollbars but keep functionality */
+.float-subtle {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 html {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
   scroll-behavior: smooth;
+}
+
+/* ===== FOCUS STATES ===== */
+*:focus-visible {
+  outline: 2px solid var(--amber-core);
+  outline-offset: 2px;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .aura-glow,
+  .flame-pulse,
+  .float-subtle {
+    animation: none;
+  }
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background-color: rgba(245, 158, 11, 0.3);
+  color: white;
+}
+
+/* ===== INPUT AUTOFILL ===== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px var(--obsidian) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ===== CUSTOM UTILITIES ===== */
+.text-balance {
+  text-wrap: balance;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--amber-core) 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

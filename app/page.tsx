@@ -7,16 +7,13 @@ import { ORGANIZATION, TAGLINE, getCurrentWatch, DAYS, getEventProgress } from '
 import { auth, db, isFirebaseAvailable, onAuthStateChanged, signOut } from '@/lib/firebase'
 import { doc, getDoc, collection, getDocs, query, where, limit, onSnapshot, updateDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import GlobalHeatmap from '@/components/GlobalHeatmap'
-import GlobalFire from '@/components/GlobalFire'
 import CountdownTimer from '@/components/CountdownTimer'
 import { useEventTiming } from '@/hooks/useEventTiming'
 import { usePrayerTheme } from '@/hooks/usePrayerTheme'
 
-
 export default function LandingPage() {
     const router = useRouter()
 
-    // Dynamic Timing Hook
     const {
         isStarted,
         isEnded,
@@ -31,10 +28,7 @@ export default function LandingPage() {
     const [userLocation, setUserLocation] = useState("")
     const [authError, setAuthError] = useState(false)
 
-    // Dynamic Prayer Theme
     const { activeTheme: currentTheme } = usePrayerTheme()
-
-    // Use dynamic progress if available, otherwise 0
     const progress = isStarted ? timingProgress : 0
 
     const [stats, setStats] = useState({ intercessors: 0, countries: 0 })
@@ -44,7 +38,6 @@ export default function LandingPage() {
     useEffect(() => {
         if (!db) return
 
-        // Real-time Users & Stats
         const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
             const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
             setAllUsers(users)
@@ -58,7 +51,6 @@ export default function LandingPage() {
             })
         })
 
-        // Real-time Online Sessions
         const unsubOnline = onSnapshot(collection(db, "active_sessions"), (snap) => {
             const active = snap.docs
                 .map(d => d.data())
@@ -94,21 +86,17 @@ export default function LandingPage() {
                             setWatchmanName(data.name)
                             setUserLocation(data.location || "")
 
-                            // Repair missing email for legacy users
                             if (!data.email && u.email) {
                                 updateDoc(docRef, { email: u.email }).catch(err => console.warn("Email repair failed", err))
                             }
                         } else {
-                            // Auth user exists but no Firestore doc -> Full Repair/Migration
                             try {
-                                // 1. Attempt legacy migration if they came from 'watchmen' collection
                                 const legacyRef = doc(db, "watchmen", u.uid)
                                 const legacySnap = await getDoc(legacyRef)
 
                                 const name = legacySnap.exists() ? legacySnap.data().name : (u.displayName || "Watchman")
                                 const location = legacySnap.exists() ? (legacySnap.data().location || "") : ""
 
-                                // 2. Create the missing 'users' document
                                 await setDoc(docRef, {
                                     uid: u.uid,
                                     name: name,
@@ -144,197 +132,301 @@ export default function LandingPage() {
     }
 
     return (
-        <div className="relative min-h-screen selection:bg-amber-500/30">
-            {/* Eternal Flame Ambient Background */}
+        <div className="relative min-h-screen">
+            {/* === LAYERED AMBIENT BACKGROUND === */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] aura-glow rounded-full" />
-                <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-96 bg-amber-600/20 blur-[120px] flame-pulse" />
+                {/* Primary flame glow */}
+                <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] md:w-[1000px] md:h-[1000px] rounded-full aura-glow opacity-60" />
+                {/* Vertical flame pillar */}
+                <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 md:w-48 h-[500px] bg-gradient-to-t from-transparent via-amber-600/15 to-transparent blur-[100px] flame-pulse" />
+                {/* Bottom fade */}
+                <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/80 to-transparent" />
+                {/* Noise texture */}
+                <div className="absolute inset-0 opacity-[0.015] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3QgZmlsdGVyPSJ1cmwoI2EpIiBoZWlnaHQ9IjEwMCUiIHdpZHRoPSIxMDAlIi8+PC9zdmc+')]" />
             </div>
 
-            <div className="relative z-10 max-w-4xl mx-auto px-6 py-8 md:py-24 animate-in fade-in duration-1000 slide-in-from-bottom-8">
-                {/* Header branding */}
-                <div className="flex justify-between items-center mb-12 md:mb-24">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] tracking-[0.5em] text-stone-500 uppercase font-black mb-2">
-                            {ORGANIZATION}
-                        </span>
-                        <div className="h-px w-10 bg-amber-600/30" />
-                    </div>
-                </div>
-
-                {/* Progress Pulse (Only show if started) */}
-                {isStarted && (
-                    <div className="mb-12 md:mb-16">
-                        <div className="flex justify-between items-end mb-4">
-                            <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-1">72H Progress</span>
-                                <span className="serif text-lg md:text-xl text-stone-100 font-light">{progress}% Completed</span>
-                            </div>
-                            <span className="text-[9px] md:text-[10px] text-stone-500 font-bold tracking-widest uppercase">Hour {Math.floor((progress / 100) * 72)} of 72</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-stone-900/50 rounded-full overflow-hidden border border-white/5 p-[1px]">
-                            <div
-                                className="h-full bg-gradient-to-r from-amber-900 via-amber-600 to-amber-400 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all duration-1000 ease-out"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Hero Title */}
-                <div className="mb-16 md:mb-24 relative">
-                    <h2 className="serif text-5xl md:text-8xl text-stone-100 leading-[1.1] md:leading-[1] mb-6 md:mb-8 tracking-tighter">
-                        72 Hours <br />
-                        <span className="italic text-amber-500 font-light drop-shadow-2xl opacity-90">Prayer Chain.</span>
-                    </h2>
-                    <p className="text-stone-500 text-xs md:text-lg font-light tracking-wide max-w-lg leading-relaxed italic">
-                        A continuous global wave of intercession, worship, and spiritual warfare.
-                    </p>
-                </div>
-
-                {/* User Identity (Glass Card) */}
-                <div className="mb-12">
-                    {!user ? (
-                        <div className="p-8 glass rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 border-amber-900/20">
-                            <div className="text-center md:text-left">
-                                <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-2">Join the Registry</h4>
-                                <p className="text-xs text-stone-400">Secure your hour on the Watchman&apos;s Wall.</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <Link href="/login" className="px-6 py-3 text-[10px] font-bold text-stone-100 uppercase border border-white/10 hover:bg-white/5 transition-all rounded-full">Log In</Link>
-                                <Link href="/signup" className="px-6 py-3 text-[10px] font-bold text-[#050505] uppercase bg-amber-500 hover:bg-amber-400 transition-all rounded-full shadow-lg shadow-amber-900/20">Register</Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="p-4 glass rounded-xl flex items-center justify-between border-stone-800">
-                            <div className="flex flex-col">
-                                <span className="text-[8px] uppercase tracking-[0.3em] text-stone-500 mb-1 font-bold">Watchman Profile</span>
-                                <div className="flex items-center gap-2">
-                                    <Link href="/profile" className="text-sm font-medium text-stone-200 hover:text-amber-500 transition-colors">
-                                        {watchmanName || user.email?.split('@')[0] || 'Intercessor'}
-                                        {userLocation && <span className="ml-1 text-stone-500 text-[10px] font-light">({userLocation})</span>}
-                                    </Link>
-                                    <span className="w-1 h-1 rounded-full bg-stone-700" />
-                                    <button onClick={handleLogout} className="text-[9px] text-stone-500 hover:text-amber-500 uppercase tracking-widest transition-colors font-bold">Logout</button>
+            {/* === FLOATING HEADER === */}
+            <header className="fixed top-0 left-0 right-0 z-50">
+                <div className="mx-4 md:mx-8 mt-4 md:mt-6">
+                    <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/[0.06]">
+                        <div className="flex items-center justify-between">
+                            {/* Brand */}
+                            <Link href="/" className="flex items-center gap-3 group">
+                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-900/30">
+                                    <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                                    </svg>
                                 </div>
+                                <span className="text-[10px] md:text-xs tracking-[0.3em] text-stone-400 uppercase font-bold hidden lg:block group-hover:text-stone-200 transition-colors">
+                                    {ORGANIZATION}
+                                </span>
+                            </Link>
+
+                            {/* Navigation - Desktop */}
+                            <nav className="hidden md:flex items-center gap-8">
+                                <Link href="/schedule" className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-stone-200 transition-colors">
+                                    Schedule
+                                </Link>
+                                <Link href="/community" className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-stone-200 transition-colors">
+                                    Community
+                                </Link>
+                                <Link href="/rules" className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-stone-200 transition-colors">
+                                    Rules
+                                </Link>
+                            </nav>
+
+                            {/* User / Auth */}
+                            {!user ? (
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    <Link
+                                        href="/login"
+                                        className="px-4 py-2 md:px-5 md:py-2.5 text-[10px] md:text-xs font-medium text-stone-300 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                        Log In
+                                    </Link>
+                                    <Link
+                                        href="/signup"
+                                        className="px-4 py-2 md:px-5 md:py-2.5 text-[10px] md:text-xs font-bold text-[#0a0a0f] uppercase bg-amber-500 hover:bg-amber-400 rounded-xl transition-all shadow-lg shadow-amber-900/20 cursor-pointer"
+                                    >
+                                        Register
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <Link
+                                        href="/profile"
+                                        className="flex items-center gap-2 md:gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.05] transition-all cursor-pointer"
+                                    >
+                                        <div className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="hidden md:flex flex-col">
+                                            <span className="text-xs font-medium text-stone-200">
+                                                {watchmanName || user.email?.split('@')[0]}
+                                            </span>
+                                            {userLocation && (
+                                                <span className="text-[10px] text-stone-500">{userLocation}</span>
+                                            )}
+                                        </div>
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="p-2 text-stone-500 hover:text-red-400 transition-colors cursor-pointer"
+                                        title="Logout"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Navigation - Mobile */}
+                        <nav className="flex md:hidden items-center justify-center gap-6 mt-3 pt-3 border-t border-white/[0.06]">
+                            <Link href="/schedule" className="text-[9px] font-bold uppercase tracking-[0.15em] text-stone-500 hover:text-stone-200 transition-colors">
+                                Schedule
+                            </Link>
+                            <Link href="/community" className="text-[9px] font-bold uppercase tracking-[0.15em] text-stone-500 hover:text-stone-200 transition-colors">
+                                Community
+                            </Link>
+                            <Link href="/rules" className="text-[9px] font-bold uppercase tracking-[0.15em] text-stone-500 hover:text-stone-200 transition-colors">
+                                Rules
+                            </Link>
+                        </nav>
+                    </div>
+                </div>
+            </header>
+
+            {/* === MAIN CONTENT === */}
+            <main className="relative z-10 pt-40 md:pt-40 pb-16 px-4 md:px-8">
+                <div className="max-w-5xl mx-auto">
+
+                    {/* Progress Bar (When Started) */}
+                    {isStarted && (
+                        <div className="mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <div className="flex justify-between items-end mb-3">
+                                <div>
+                                    <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.3em] block mb-1">72H Progress</span>
+                                    <span className="font-serif text-xl md:text-2xl text-stone-100 font-light">{progress}%</span>
+                                </div>
+                                <span className="text-[10px] text-stone-500 font-medium tracking-wide">
+                                    Hour {Math.floor((progress / 100) * 72)} of 72
+                                </span>
                             </div>
-                            <div className="w-10 h-10 rounded-full glass border-white/5 flex items-center justify-center shadow-inner">
-                                <svg className="w-5 h-5 text-stone-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                            <div className="h-2 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/[0.06]">
+                                <div
+                                    className="h-full bg-gradient-to-r from-amber-700 via-amber-500 to-amber-400 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-1000 ease-out"
+                                    style={{ width: `${progress}%` }}
+                                />
                             </div>
                         </div>
                     )}
-                </div>
 
-                {/* Primary Action Card (The Altar Entrance) */}
-                {!isStarted ? (
-                    <div className="mb-16">
-                        <div className="relative p-10 glass rounded-3xl overflow-hidden border-stone-800 flex flex-col items-center justify-center min-h-[300px]">
-                            <CountdownTimer targetDate={startDate} />
-                            <div className="mt-8 text-center max-w-lg mx-auto">
-                                <p className="text-stone-500 text-xs italic">
-                                    Prepare your heart. The Fire falls on <span className="text-amber-500 font-bold">{startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</span>.
-                                </p>
+                    {/* Hero Section */}
+                    <div className="mb-16 md:mb-24 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                        <h1 className="font-serif text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-stone-100 leading-[0.95] mb-6 md:mb-8 tracking-tight">
+                            72 Hours<br />
+                            <span className="italic text-amber-500 font-light">Prayer Chain.</span>
+                        </h1>
+                        <p className="text-stone-500 text-sm md:text-lg font-light tracking-wide max-w-xl leading-relaxed">
+                            A continuous global wave of intercession, worship, and spiritual warfare.
+                        </p>
+                    </div>
+
+                    {/* Primary Action Card */}
+                    {!isStarted ? (
+                        <div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                            <div className="glass-card rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center min-h-[280px] md:min-h-[320px]">
+                                <CountdownTimer targetDate={startDate} />
+                                <div className="mt-8 text-center max-w-md">
+                                    <p className="text-stone-500 text-sm italic">
+                                        Prepare your heart. The Fire falls on{' '}
+                                        <span className="text-amber-500 font-semibold">
+                                            {startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}
+                                        </span>.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="mb-16 group relative">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-amber-600 to-amber-900 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
-                        <div className="relative p-10 glass rounded-3xl overflow-hidden border-stone-800">
-                            <div className="absolute top-0 right-0 p-8 text-amber-500/10">
-                                <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" /></svg>
-                            </div>
+                    ) : (
+                        <div className="mb-16 group relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                            {/* Glow effect */}
+                            <div className="absolute -inset-1 bg-gradient-to-r from-amber-600/30 to-amber-900/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
-                            <div className="relative z-10">
-                                <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em] mb-6">Active Watch</h3>
-                                <div className="mb-10">
-                                    <p className="serif text-4xl text-stone-100 mb-2 font-light">
-                                        {DAYS[dynamicWatch.dayIdx]} <span className="text-stone-700 mx-3 font-thin">|</span> {dynamicWatch.hourLabel}
-                                    </p>
-                                    <p className="text-stone-500 text-xs font-light italic tracking-wide">&quot;Could you not keep watch with me for one hour?&quot;</p>
+                            <div className="relative glass-card rounded-3xl p-8 md:p-12 overflow-hidden">
+                                {/* Background icon */}
+                                <div className="absolute top-6 right-6 text-amber-500/5">
+                                    <svg className="w-32 h-32 md:w-40 md:h-40" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                                    </svg>
                                 </div>
 
-                                <Link
-                                    href="/enter"
-                                    className="inline-flex items-center gap-4 text-[11px] font-black text-amber-500 hover:text-amber-400 uppercase tracking-[0.3em] transition-all group/link"
-                                >
-                                    <span className="relative">
-                                        Enter the Presence
-                                        <div className="absolute -bottom-1 left-0 w-0 h-px bg-amber-500 group-hover/link:w-full transition-all duration-500" />
+                                <div className="relative z-10">
+                                    <span className="text-[10px] md:text-xs font-bold text-amber-500 uppercase tracking-[0.4em] block mb-6">
+                                        Active Watch
                                     </span>
-                                    <svg className="w-5 h-5 transform group-hover/link:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                </Link>
+
+                                    <div className="mb-10">
+                                        <p className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-100 mb-3 font-light">
+                                            {DAYS[dynamicWatch.dayIdx]}
+                                            <span className="text-stone-700 mx-3 md:mx-4 font-thin">|</span>
+                                            {dynamicWatch.hourLabel}
+                                        </p>
+                                        <p className="text-stone-500 text-sm font-light italic">
+                                            "Could you not keep watch with me for one hour?"
+                                        </p>
+                                    </div>
+
+                                    <Link
+                                        href="/enter"
+                                        className="inline-flex items-center gap-3 text-xs md:text-sm font-bold text-amber-500 hover:text-amber-400 uppercase tracking-[0.2em] transition-all group/link cursor-pointer"
+                                    >
+                                        <span className="relative">
+                                            Enter the Presence
+                                            <span className="absolute -bottom-1 left-0 w-0 h-px bg-amber-500 group-hover/link:w-full transition-all duration-300" />
+                                        </span>
+                                        <svg className="w-5 h-5 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Global Prayer Focus */}
+                    <div className="mb-16 md:mb-20 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+                        <div className="relative pl-6 md:pl-8 border-l-2 border-amber-500/20">
+                            <div className="absolute left-[-1px] top-0 h-16 w-0.5 bg-gradient-to-b from-amber-500 to-transparent" />
+
+                            <span className="text-[10px] font-bold text-amber-500/80 uppercase tracking-[0.4em] block mb-5">
+                                Global Burden
+                            </span>
+
+                            <h2 className="font-serif text-2xl md:text-3xl lg:text-4xl text-stone-100 mb-4 font-light leading-snug">
+                                {currentTheme.title}
+                            </h2>
+
+                            <p className="text-sm text-stone-500 italic mb-8 pb-6 border-b border-white/[0.06] max-w-xl">
+                                {currentTheme.scripture}
+                            </p>
+
+                            <ul className="space-y-4 max-w-xl">
+                                {currentTheme.points.map((point, i) => (
+                                    <li key={i} className="flex items-start gap-4 group">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/40 mt-2 shrink-0 group-hover:bg-amber-500 transition-colors" />
+                                        <span className="text-sm md:text-base text-stone-400 font-light leading-relaxed group-hover:text-stone-300 transition-colors">
+                                            {point}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
-                )}
 
-                {/* Global Prayer Focus */}
-                <div className="mb-20 border-l border-amber-500/20 pl-8 relative">
-                    <div className="absolute left-[-1px] top-0 h-12 w-px bg-gradient-to-b from-amber-500 to-transparent" />
-                    <h4 className="text-[9px] font-black text-amber-500 uppercase tracking-[0.5em] mb-6 opacity-80">Global Burden</h4>
-                    <p className="serif text-2xl md:text-3xl text-stone-100 mb-3 font-light leading-snug">{currentTheme.title}</p>
-                    <p className="text-[11px] text-stone-500 italic mb-8 tracking-wide font-light border-b border-stone-800 pb-4">{currentTheme.scripture}</p>
-                    <ul className="space-y-4">
-                        {currentTheme.points.map((p, i) => (
-                            <li key={i} className="text-[13px] text-stone-400 font-light flex items-start gap-4 group">
-                                <span className="text-amber-500/50 mt-1 transition-transform group-hover:scale-150">•</span>
-                                <span className="group-hover:text-stone-200 transition-colors">{p}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Secondary Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Link
-                        href="/enter"
-                        className={`flex items-center justify-center font-black py-5 px-8 rounded-2xl tracking-[0.3em] uppercase text-[10px] transition-all shadow-2xl 
-                        ${isStarted
-                                ? "bg-stone-100 hover:bg-white text-[#050505] shadow-stone-900/50"
-                                : "glass text-stone-500 border-white/5 opacity-50"}`}
-                    >
-                        {isStarted ? "Enter Altar Room" : "Altar Room (Coming Soon)"}
-                    </Link>
-                    <Link
-                        href="/schedule"
-                        className="flex items-center justify-center glass hover:bg-white/5 text-stone-300 font-bold py-5 px-8 rounded-2xl tracking-[0.2em] uppercase text-[9px] transition-all"
-                    >
-                        Registry & Schedule
-                    </Link>
-                </div>
-
-                {/* Movement Impact Stats */}
-                <div className="mt-24 grid grid-cols-2 gap-4">
-                    <div className="p-8 glass rounded-3xl border-stone-800 text-center group hover:border-amber-500/20 transition-all">
-                        <h5 className="text-[9px] font-black text-stone-500 uppercase tracking-[0.4em] mb-4">Watchmen Joined</h5>
-                        <p className="serif text-4xl text-stone-100 font-light group-hover:text-amber-500 transition-colors">{stats.intercessors}</p>
+                    {/* CTA Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400">
+                        <Link
+                            href="/enter"
+                            className="flex items-center justify-center gap-2 font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs transition-all bg-stone-100 hover:bg-white text-[#0a0a0f] shadow-xl shadow-black/30 cursor-pointer"
+                        >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                            </svg>
+                            Enter Altar Room
+                        </Link>
+                        <Link
+                            href="/schedule"
+                            className="flex items-center justify-center gap-2 glass-button font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs text-stone-300 hover:text-white cursor-pointer"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            View Schedule
+                        </Link>
                     </div>
-                    <div className="p-8 glass rounded-3xl border-stone-800 text-center group hover:border-amber-500/20 transition-all">
-                        <h5 className="text-[9px] font-black text-stone-500 uppercase tracking-[0.4em] mb-4">Nations Reached</h5>
-                        <p className="serif text-4xl text-stone-100 font-light group-hover:text-amber-500 transition-colors">{stats.countries}</p>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3 md:gap-4 mb-16 animate-in fade-in slide-in-from-bottom-14 duration-1000 delay-500">
+                        <div className="glass-card rounded-2xl md:rounded-3xl p-6 md:p-8 text-center group hover:border-amber-500/20 transition-all cursor-default">
+                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-[0.3em] block mb-3">
+                                Watchmen Joined
+                            </span>
+                            <p className="font-serif text-3xl md:text-5xl text-stone-100 font-light group-hover:text-amber-500 transition-colors">
+                                {stats.intercessors}
+                            </p>
+                        </div>
+                        <div className="glass-card rounded-2xl md:rounded-3xl p-6 md:p-8 text-center group hover:border-amber-500/20 transition-all cursor-default">
+                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-[0.3em] block mb-3">
+                                Nations Reached
+                            </span>
+                            <p className="font-serif text-3xl md:text-5xl text-stone-100 font-light group-hover:text-amber-500 transition-colors">
+                                {stats.countries}
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-
-
-                {/* Global Pulse Heatmap */}
-                <div className="mt-16">
-                    <GlobalHeatmap users={allUsers} onlineUids={onlineUids} />
-                </div>
-
-                {/* Footer Quote */}
-                <div className="mt-24 text-center">
-                    <div className="flex items-center justify-center gap-4 mb-4">
-                        <div className="h-px w-10 bg-stone-800" />
-                        <div className="w-1.5 h-1.5 bg-amber-500/20 rounded-full" />
-                        <div className="h-px w-10 bg-stone-800" />
+                    {/* Global Heatmap */}
+                    <div className="mb-16">
+                        <GlobalHeatmap users={allUsers} onlineUids={onlineUids} />
                     </div>
-                    <p className="text-stone-500 text-[10px] tracking-[0.4em] uppercase font-light italic">
-                        {TAGLINE}
-                    </p>
+
+                    {/* Footer */}
+                    <footer className="text-center pt-8 border-t border-white/[0.04]">
+                        <div className="flex items-center justify-center gap-4 mb-4">
+                            <div className="h-px w-12 bg-gradient-to-r from-transparent to-stone-800" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500/30" />
+                            <div className="h-px w-12 bg-gradient-to-l from-transparent to-stone-800" />
+                        </div>
+                        <p className="text-stone-600 text-[10px] tracking-[0.4em] uppercase font-light">
+                            {TAGLINE}
+                        </p>
+                    </footer>
                 </div>
-            </div>
+            </main>
         </div>
     )
 }
