@@ -16,6 +16,9 @@ export default function AltarRoom() {
     const [showVocalRoom, setShowVocalRoom] = useState(false)
     const [vocalMinimized, setVocalMinimized] = useState(false)
     const [isPipMode, setIsPipMode] = useState(false)
+    const [vocalPos, setVocalPos] = useState({ x: 0, y: 0 })
+    const [isDragging, setIsDragging] = useState(false)
+    const dragStart = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 })
     const [promptingText, setPromptingText] = useState('')
     const [mounted, setMounted] = useState(false)
     const [activeReaction, setActiveReaction] = useState<string | null>(null)
@@ -60,6 +63,30 @@ export default function AltarRoom() {
         sendBurst(emoji)
         setTimeout(() => setActiveReaction(null), 200)
     }
+
+    const handleDragStart = (e: React.PointerEvent) => {
+        if ((e.target as HTMLElement).closest('button')) return
+        setIsDragging(true)
+        dragStart.current = {
+            x: e.clientX,
+            y: e.clientY,
+            initialX: vocalPos.x,
+            initialY: vocalPos.y
+        }
+            ; (e.target as HTMLElement).setPointerCapture(e.pointerId)
+    }
+
+    const handleDragMove = (e: React.PointerEvent) => {
+        if (!isDragging) return
+        const dx = e.clientX - dragStart.current.x
+        const dy = e.clientY - dragStart.current.y
+        setVocalPos({
+            x: dragStart.current.initialX + dx,
+            y: dragStart.current.initialY + dy
+        })
+    }
+
+    const handleDragEnd = () => setIsDragging(false)
 
     if (loading) {
         return (
@@ -358,19 +385,30 @@ export default function AltarRoom() {
 
                     {/* Drawer / PiP Container */}
                     <div
-                        className={`fixed z-50 transform transition-all duration-500 ease-out 
+                        className={`fixed z-50 transform transition-all 
+                            ${isDragging ? 'duration-0' : 'duration-500 ease-out'} 
                             ${isPipMode
                                 ? 'bottom-24 right-4 md:right-8 w-[280px] h-[160px] md:w-[360px] md:h-[200px] translate-x-0'
                                 : vocalMinimized
                                     ? 'translate-x-full'
                                     : 'top-0 right-0 h-full w-full md:w-[420px] translate-x-0'
                             }`}
+                        style={{
+                            transform: isPipMode || vocalMinimized
+                                ? `translate(${vocalPos.x}px, ${vocalPos.y}px)`
+                                : undefined
+                        }}
                     >
                         <div className={`h-full flex flex-col bg-[#0f0f14]/95 backdrop-blur-2xl border border-white/[0.08] shadow-2xl
                             ${isPipMode ? 'rounded-2xl overflow-hidden' : 'md:border-l'}`}>
 
                             {/* Drawer/PiP Header */}
-                            <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/[0.06]">
+                            <div
+                                onPointerDown={isPipMode ? handleDragStart : undefined}
+                                onPointerMove={isPipMode ? handleDragMove : undefined}
+                                onPointerUp={isPipMode ? handleDragEnd : undefined}
+                                className={`flex items-center justify-between p-3 md:p-4 border-b border-white/[0.06] ${isPipMode ? 'cursor-move select-none' : ''}`}
+                            >
                                 <div className={isPipMode ? 'hidden md:block' : ''}>
                                     <h3 className="text-sm font-semibold text-stone-100 tracking-wide">Vocal Room</h3>
                                     {!isPipMode && (
@@ -446,7 +484,16 @@ export default function AltarRoom() {
 
                     {/* Minimized Floating Bar */}
                     {vocalMinimized && !isPipMode && (
-                        <div className="fixed top-20 right-4 md:right-8 z-50 animate-in slide-in-from-right duration-300">
+                        <div
+                            onPointerDown={handleDragStart}
+                            onPointerMove={handleDragMove}
+                            onPointerUp={handleDragEnd}
+                            className={`fixed top-20 right-4 md:right-8 z-50 cursor-move select-none 
+                                ${isDragging ? 'duration-0' : 'duration-300 animate-in slide-in-from-right'}`}
+                            style={{
+                                transform: `translate(${vocalPos.x}px, ${vocalPos.y}px)`
+                            }}
+                        >
                             <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-2xl">
                                 <div className="flex items-center gap-2 pr-3 border-r border-white/[0.1]">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
