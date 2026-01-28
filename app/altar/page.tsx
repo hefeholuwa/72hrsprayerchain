@@ -86,7 +86,15 @@ export default function AltarRoom() {
         })
     }
 
-    const handleDragEnd = () => setIsDragging(false)
+    const handleDragEnd = (e: React.PointerEvent) => {
+        setIsDragging(false)
+            ; (e.target as HTMLElement).releasePointerCapture(e.pointerId)
+    }
+
+    // Reset position when changing modes to prevent jumps
+    useEffect(() => {
+        setVocalPos({ x: 0, y: 0 })
+    }, [isPipMode, vocalMinimized, showVocalRoom])
 
     if (loading) {
         return (
@@ -402,11 +410,11 @@ export default function AltarRoom() {
                         <div className={`h-full flex flex-col bg-[#0f0f14]/95 backdrop-blur-2xl border border-white/[0.08] shadow-2xl
                             ${isPipMode ? 'rounded-2xl overflow-hidden' : 'md:border-l'}`}>
 
-                            {/* Drawer/PiP Header */}
                             <div
                                 onPointerDown={isPipMode ? handleDragStart : undefined}
                                 onPointerMove={isPipMode ? handleDragMove : undefined}
                                 onPointerUp={isPipMode ? handleDragEnd : undefined}
+                                style={{ touchAction: isPipMode ? 'none' : 'auto' }}
                                 className={`flex items-center justify-between p-3 md:p-4 border-b border-white/[0.06] ${isPipMode ? 'cursor-move select-none' : ''}`}
                             >
                                 <div className={isPipMode ? 'hidden md:block' : ''}>
@@ -491,7 +499,8 @@ export default function AltarRoom() {
                             className={`fixed top-20 right-4 md:right-8 z-50 cursor-move select-none 
                                 ${isDragging ? 'duration-0' : 'duration-300 animate-in slide-in-from-right'}`}
                             style={{
-                                transform: `translate(${vocalPos.x}px, ${vocalPos.y}px)`
+                                transform: `translate(${vocalPos.x}px, ${vocalPos.y}px)`,
+                                touchAction: 'none'
                             }}
                         >
                             <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-2xl">
