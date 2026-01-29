@@ -8,6 +8,7 @@ import { EVENT_START_DATE, TOTAL_HOURS, HOURS } from "@/lib/constants"
 export function useEventTiming() {
     const [startDate, setStartDate] = useState<Date>(EVENT_START_DATE)
     const [now, setNow] = useState<Date>(new Date())
+    const [roomLockedUntil, setRoomLockedUntil] = useState<Date | null>(null)
 
     useEffect(() => {
         // Sync clock every second
@@ -20,11 +21,19 @@ export function useEventTiming() {
 
         // Listen for dynamic start date from Firestore
         const unsub = onSnapshot(doc(db, "config", "metadata"), (doc) => {
-            if (doc.exists() && doc.data().startDate) {
+            if (doc.exists()) {
                 // Parse ISO string or Timestamp
                 const data = doc.data()
-                const date = data.startDate.toDate ? data.startDate.toDate() : new Date(data.startDate)
-                setStartDate(date)
+                if (data.startDate) {
+                    const date = data.startDate.toDate ? data.startDate.toDate() : new Date(data.startDate)
+                    setStartDate(date)
+                }
+
+                if (data.roomLockedUntil) {
+                    setRoomLockedUntil(data.roomLockedUntil.toDate ? data.roomLockedUntil.toDate() : new Date(data.roomLockedUntil))
+                } else {
+                    setRoomLockedUntil(null)
+                }
             }
         }, (err) => {
             console.warn("Using default start date (offline):", err)
@@ -82,6 +91,7 @@ export function useEventTiming() {
             dayIdx: effectiveDayIdx,
             hourLabel: HOURS[currentHourIdx],
             totalHoursElapsed: hourDiff
-        }
+        },
+        roomLockedUntil
     }
 }

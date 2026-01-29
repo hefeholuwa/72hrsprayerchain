@@ -93,6 +93,7 @@ export default function AdminDashboard() {
     const [saveMsg, setSaveMsg] = useState("")
     const [onlineSessions, setOnlineSessions] = useState<any[]>([])
     const [currentTime, setCurrentTime] = useState(Date.now())
+    const [roomLockedUntil, setRoomLockedUntil] = useState<any>(null)
     const router = useRouter()
 
     const deleteUserWatch = async (userId: string) => {
@@ -194,12 +195,15 @@ export default function AdminDashboard() {
         }, (err) => console.error("Online sync error", err))
 
         // Fetch Config
-        getDoc(doc(firestore, "config", "metadata")).then(snap => {
-            if (snap.exists() && snap.data().startDate) {
-                const date = snap.data().startDate.toDate ? snap.data().startDate.toDate() : new Date(snap.data().startDate)
-                // Format for datetime-local input (YYYY-MM-DDThh:mm)
-                const iso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
-                setConfigDate(iso)
+        onSnapshot(doc(firestore, "config", "metadata"), (snap) => {
+            if (snap.exists()) {
+                const data = snap.data()
+                if (data.startDate) {
+                    const date = data.startDate.toDate ? data.startDate.toDate() : new Date(data.startDate)
+                    const iso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
+                    setConfigDate(iso)
+                }
+                setRoomLockedUntil(data.roomLockedUntil)
             }
         })
 
@@ -722,6 +726,78 @@ export default function AdminDashboard() {
                                     {saveMsg}
                                 </p>
                             )}
+                        </div>
+
+                        <div className="mt-12">
+                            <h4 className="serif text-2xl text-stone-200 mb-8">Room Management</h4>
+                            <div className="glass p-8 rounded-3xl border-stone-800 space-y-6">
+                                <div>
+                                    <label className="block text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold mb-2">
+                                        Altar Room Status
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        {roomLockedUntil && roomLockedUntil.toMillis() > currentTime ? (
+                                            <>
+                                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                                                <span className="text-sm text-red-400 font-medium">
+                                                    Locked until {roomLockedUntil.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                <span className="text-sm text-emerald-400 font-medium">Open & Public</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button
+                                        onClick={async () => {
+                                            if (!db) return
+                                            const lockDuration = 3 * 60 * 60 * 1000 // 3 hours
+                                            const lockUntil = new Date(Date.now() + lockDuration)
+                                            try {
+                                                await setDoc(doc(db, "config", "metadata"), {
+                                                    roomLockedUntil: lockUntil,
+                                                    updatedAt: serverTimestamp(),
+                                                    updatedBy: auth?.currentUser?.email
+                                                }, { merge: true })
+                                                alert("Room locked for 3 hours.")
+                                            } catch (err) {
+                                                console.error(err)
+                                                alert("Failed to lock room.")
+                                            }
+                                        }}
+                                        className="bg-red-900/10 hover:bg-red-900/20 border border-red-900/30 text-red-500 font-bold py-3 rounded-xl uppercase tracking-[0.2em] text-[9px] transition-all"
+                                    >
+                                        Lock Room (3 Hours)
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!db) return
+                                            try {
+                                                await setDoc(doc(db, "config", "metadata"), {
+                                                    roomLockedUntil: null,
+                                                    updatedAt: serverTimestamp(),
+                                                    updatedBy: auth?.currentUser?.email
+                                                }, { merge: true })
+                                                alert("Room unlocked.")
+                                            } catch (err) {
+                                                console.error(err)
+                                                alert("Failed to unlock room.")
+                                            }
+                                        }}
+                                        className="bg-white/5 hover:bg-white/10 border border-white/10 text-stone-300 font-bold py-3 rounded-xl uppercase tracking-[0.2em] text-[9px] transition-all"
+                                    >
+                                        Unlock Immediately
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-stone-600 italic">
+                                    Locking the room prevents intercessors from joining the video room. Use this for scheduled maintenance or private leadership sessions.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="mt-12">
