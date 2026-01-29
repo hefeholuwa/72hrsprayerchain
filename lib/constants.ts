@@ -1,6 +1,6 @@
 export const JAAS_APP_ID = 'vpaas-magic-cookie-5b779c14329a42e78a930a2195662902'
 // Audio-only config: disable video, start muted, hide video buttons
-export const PRAYER_ROOM_URL = process.env.NEXT_PUBLIC_PRAYER_ROOM_URL || `https://8x8.vc/${JAAS_APP_ID}/72HPrayerChainNigeria#config.startWithVideoMuted=true&config.startWithAudioMuted=true&config.disableVideo=true&config.toolbarButtons=["microphone","hangup","chat","raisehand","tileview","participants-pane"]`
+export const PRAYER_ROOM_URL = process.env.NEXT_PUBLIC_PRAYER_ROOM_URL || `https://meet.jit.si/72HPrayerChainNigeria#config.startWithVideoMuted=true&config.startWithAudioMuted=true&config.disableVideo=true&config.disableDeepLinking=true&config.toolbarButtons=["microphone","hangup","chat","raisehand","tileview","participants-pane"]`
 export const COORDINATION_WA = '2348000000000'
 export const APP_NAME = "72H Prayer Chain"
 export const TAGLINE = "Until Revival comes."

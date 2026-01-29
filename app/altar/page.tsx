@@ -14,16 +14,12 @@ export default function AltarRoom() {
     const [user, setUser] = useState<any>(null)
     const [userName, setUserName] = useState<string>('Intercessor')
     const [loading, setLoading] = useState(true)
-    const [showVocalRoom, setShowVocalRoom] = useState(false)
-    const [vocalMinimized, setVocalMinimized] = useState(false)
-    const [isPipMode, setIsPipMode] = useState(false)
-    const [vocalPos, setVocalPos] = useState({ x: 0, y: 0 })
-    const [isDragging, setIsDragging] = useState(false)
-    const dragStart = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 })
-    const [promptingText, setPromptingText] = useState('')
+
+    // Simplified state
     const [mounted, setMounted] = useState(false)
     const [activeReaction, setActiveReaction] = useState<string | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const [promptingText, setPromptingText] = useState('')
 
     const { activeTheme } = usePrayerTheme()
     const {
@@ -69,38 +65,6 @@ export default function AltarRoom() {
         sendBurst(emoji)
         setTimeout(() => setActiveReaction(null), 200)
     }
-
-    const handleDragStart = (e: React.PointerEvent) => {
-        if ((e.target as HTMLElement).closest('button')) return
-        setIsDragging(true)
-        dragStart.current = {
-            x: e.clientX,
-            y: e.clientY,
-            initialX: vocalPos.x,
-            initialY: vocalPos.y
-        }
-            ; (e.target as HTMLElement).setPointerCapture(e.pointerId)
-    }
-
-    const handleDragMove = (e: React.PointerEvent) => {
-        if (!isDragging) return
-        const dx = e.clientX - dragStart.current.x
-        const dy = e.clientY - dragStart.current.y
-        setVocalPos({
-            x: dragStart.current.initialX + dx,
-            y: dragStart.current.initialY + dy
-        })
-    }
-
-    const handleDragEnd = (e: React.PointerEvent) => {
-        setIsDragging(false)
-            ; (e.target as HTMLElement).releasePointerCapture(e.pointerId)
-    }
-
-    // Reset position when changing modes to prevent jumps
-    useEffect(() => {
-        setVocalPos({ x: 0, y: 0 })
-    }, [isPipMode, vocalMinimized, showVocalRoom])
 
     if (loading) {
         return (
@@ -155,10 +119,10 @@ export default function AltarRoom() {
             {bursts.map((burst) => (
                 <div
                     key={burst.id}
-                    className="fixed flex flex-col items-center pointer-events-none z-20 animate-burst"
+                    className="fixed flex flex-col items-center pointer-events-none z-30 animate-float-up"
                     style={{
                         left: `${burst.x}%`,
-                        bottom: '120px'
+                        bottom: '100px'
                     }}
                 >
                     <span className="text-4xl md:text-5xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">{burst.emoji}</span>
@@ -299,14 +263,6 @@ export default function AltarRoom() {
                                     >
                                         <span
                                             className="mt-2 w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-500"
-                                            style={{
-                                                background: focusedPoint === i
-                                                    ? activeTheme.colorScheme.primary
-                                                    : activeTheme.colorScheme.primary + '40',
-                                                boxShadow: focusedPoint === i
-                                                    ? `0 0 12px ${activeTheme.colorScheme.primary}`
-                                                    : 'none'
-                                            }}
                                         />
                                         <span className="leading-relaxed">{point}</span>
                                     </li>
@@ -316,24 +272,25 @@ export default function AltarRoom() {
                     </div>
                 </div>
 
-                {/* === VOCAL ROOM BUTTON === */}
-                <button
-                    onClick={() => setShowVocalRoom(!showVocalRoom)}
-                    className={`group mt-6 md:mt-8 px-6 py-4 md:px-8 md:py-5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 w-full max-w-lg md:max-w-xl cursor-pointer ${showVocalRoom
-                        ? 'bg-amber-500/10 border-amber-500/30'
-                        : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]'
-                        } border backdrop-blur-sm`}
+                {/* === JOIN ROOM BUTTON (External) === */}
+                <a
+                    href={PRAYER_ROOM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-6 md:mt-8 px-6 py-4 md:px-8 md:py-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all duration-300 flex items-center justify-center gap-3 w-full max-w-lg md:max-w-xl cursor-pointer backdrop-blur-sm"
                 >
-                    <div className={`p-2 rounded-xl transition-all ${showVocalRoom ? 'bg-amber-500/20' : 'bg-white/[0.05] group-hover:bg-white/[0.08]'}`}>
-                        <svg className={`w-5 h-5 transition-colors ${showVocalRoom ? 'text-amber-500' : 'text-stone-400 group-hover:text-stone-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-500">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <span className={`text-xs md:text-sm uppercase tracking-[0.2em] font-medium transition-colors ${showVocalRoom ? 'text-amber-500' : 'text-stone-400 group-hover:text-stone-300'
-                        }`}>
-                        {showVocalRoom ? 'Close Vocal Room' : 'Join Vocal Room'}
+                    <span className="text-xs md:text-sm uppercase tracking-[0.2em] font-medium text-amber-500">
+                        Join Video Room
                     </span>
-                </button>
+                    <svg className="w-4 h-4 text-amber-500/50 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                </a>
             </main>
 
             {/* === REACTION BAR (Fixed Bottom) === */}
@@ -394,188 +351,6 @@ export default function AltarRoom() {
                         ))}
                     </div>
                 </div>
-            </div>
-
-            {/* === VOCAL ROOM DRAWER === */}
-            {showVocalRoom && (
-                <>
-                    {/* Backdrop - Only for Drawer mode */}
-                    {!isPipMode && !vocalMinimized && (
-                        <div
-                            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 animate-in fade-in duration-300"
-                            onClick={() => setShowVocalRoom(false)}
-                        />
-                    )}
-
-                    {/* Drawer / PiP Container */}
-                    <div
-                        className={`fixed z-50 transform transition-all 
-                            ${isDragging ? 'duration-0' : 'duration-500 ease-out'} 
-                            ${isPipMode
-                                ? 'bottom-24 right-4 md:right-8 w-[280px] h-[160px] md:w-[360px] md:h-[200px] translate-x-0'
-                                : vocalMinimized
-                                    ? 'translate-x-full'
-                                    : 'top-0 right-0 h-full w-full md:w-[420px] translate-x-0'
-                            }`}
-                        style={{
-                            transform: isPipMode || vocalMinimized
-                                ? `translate(${vocalPos.x}px, ${vocalPos.y}px)`
-                                : undefined
-                        }}
-                    >
-                        <div className={`h-full flex flex-col bg-[#0f0f14]/95 backdrop-blur-2xl border border-white/[0.08] shadow-2xl
-                            ${isPipMode ? 'rounded-2xl overflow-hidden' : 'md:border-l'}`}>
-
-                            <div
-                                onPointerDown={isPipMode ? handleDragStart : undefined}
-                                onPointerMove={isPipMode ? handleDragMove : undefined}
-                                onPointerUp={isPipMode ? handleDragEnd : undefined}
-                                style={{ touchAction: isPipMode ? 'none' : 'auto' }}
-                                className={`flex items-center justify-between p-3 md:p-4 border-b border-white/[0.06] ${isPipMode ? 'cursor-move select-none' : ''}`}
-                            >
-                                <div className={isPipMode ? 'hidden md:block' : ''}>
-                                    <h3 className="text-sm font-semibold text-stone-100 tracking-wide">Vocal Room</h3>
-                                    {!isPipMode && (
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                                            <p className="text-[10px] text-stone-500">Live Audio</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-1 ml-auto">
-                                    <button
-                                        onClick={() => setIsPipMode(!isPipMode)}
-                                        className={`p-1.5 md:p-2 rounded-xl transition-all cursor-pointer ${isPipMode ? 'text-amber-500 bg-amber-500/10' : 'text-stone-500 hover:text-stone-300 hover:bg-white/[0.05]'}`}
-                                        title={isPipMode ? "Exit PiP" : "PiP Mode"}
-                                    >
-                                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16h6v6" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 8h6V2" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M22 2l-6 6" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2 22l6-6" />
-                                        </svg>
-                                    </button>
-                                    {!isPipMode && (
-                                        <button
-                                            onClick={() => setVocalMinimized(true)}
-                                            className="p-1.5 md:p-2 text-stone-500 hover:text-stone-300 hover:bg-white/[0.05] rounded-xl transition-all cursor-pointer"
-                                            title="Minimize"
-                                        >
-                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            setShowVocalRoom(false)
-                                            setIsPipMode(false)
-                                        }}
-                                        className="p-1.5 md:p-2 text-stone-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
-                                        title="Close"
-                                    >
-                                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Jitsi Embed */}
-                            <div className="flex-1 relative bg-black/30">
-                                <iframe
-                                    src={PRAYER_ROOM_URL}
-                                    allow="camera; microphone; fullscreen; display-capture; autoplay"
-                                    className="w-full h-full absolute inset-0"
-                                    style={{ border: 'none' }}
-                                />
-                            </div>
-
-                            {/* Footer - Only for Drawer mode */}
-                            {!isPipMode && (
-                                <div className="p-3 border-t border-white/[0.06] text-center bg-black/20">
-                                    <p className="text-[10px] text-stone-600 flex items-center justify-center gap-2">
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                                        </svg>
-                                        Keep mic muted unless leading prayer
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Minimized Floating Bar */}
-                    {vocalMinimized && !isPipMode && (
-                        <div
-                            onPointerDown={handleDragStart}
-                            onPointerMove={handleDragMove}
-                            onPointerUp={handleDragEnd}
-                            className={`fixed top-20 right-4 md:right-8 z-50 cursor-move select-none 
-                                ${isDragging ? 'duration-0' : 'duration-300 animate-in slide-in-from-right'}`}
-                            style={{
-                                transform: `translate(${vocalPos.x}px, ${vocalPos.y}px)`,
-                                touchAction: 'none'
-                            }}
-                        >
-                            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-2xl">
-                                <div className="flex items-center gap-2 pr-3 border-r border-white/[0.1]">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span className="text-xs text-stone-200 font-medium">Live Room</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => setVocalMinimized(false)}
-                                        className="p-1.5 text-stone-500 hover:text-amber-500 transition-colors cursor-pointer"
-                                        title="Expand"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={() => setShowVocalRoom(false)}
-                                        className="p-1.5 text-stone-500 hover:text-red-400 transition-colors cursor-pointer"
-                                        title="Close"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* === CUSTOM STYLES === */}
-            <style jsx>{`
-                @keyframes burst {
-                    0% {
-                        opacity: 1;
-                        transform: translateY(0) scale(1);
-                    }
-                    50% {
-                        opacity: 0.8;
-                    }
-                    100% {
-                        opacity: 0;
-                        transform: translateY(-250px) scale(1.8);
-                    }
-                }
-                .animate-burst {
-                    animation: burst 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-                }
-                
-                @media (prefers-reduced-motion: reduce) {
-                    .animate-burst {
-                        animation: none;
-                        opacity: 0;
-                    }
-                }
-            `}</style>
-        </div>
+            </div>        </div>
     )
 }
