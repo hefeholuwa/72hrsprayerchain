@@ -90,20 +90,28 @@ export default function SchedulePage() {
         const count = commitments[hourIdx] || 0
         const isMine = myWatches.includes(hourIdx)
 
+        const isWallFull = totalWatchesCovered === 24
+
         if (!isAdmin) {
-            // Restriction: If user already has a watch, they can't change it or remove it
-            if (myWatches.length > 0) {
+            // Restriction: If user already has a watch AND the wall is not full, they cannot take another
+            if (myWatches.length > 0 && !isWallFull) {
                 if (isMine) {
                     showNotification("You are already posted here. Stand firm in your watch!", 'info')
                 } else {
-                    showNotification("You have already committed to a watch. Please remain faithful to your post.", 'info')
+                    showNotification("You have already committed to a watch. Let others fill the gaps until the wall is complete.", 'info')
                 }
                 return
             }
-            // Note: Occupancy and "Wall Full" restrictions removed to allow new watchmen to join freely
+            // If the wall IS full, they can take additional watches, but not the SAME watch twice
+            if (myWatches.length > 0 && isWallFull && isMine) {
+                showNotification("You are already posted for this specific hour.", 'info')
+                return
+            }
         }
 
-        const commitId = isAdmin ? `watch_${user.uid}_${hourIdx}` : `watch_${user.uid}`
+        // Now that users can take multiple watches (when wall is full), we MUST use the hourIdx in their document ID
+        // so they don't overwrite their existing commitments.
+        const commitId = `watch_${user.uid}_${hourIdx}`
         const docRef = doc(db, "watches", commitId)
 
         if (isAdmin && isMine) {
@@ -195,7 +203,7 @@ export default function SchedulePage() {
                                 </div>
                                 <p className="mt-4 text-xs text-stone-500 text-center leading-relaxed">
                                     {totalWatchesCovered === 24
-                                        ? "The Wall is Complete! All slots are now locked."
+                                        ? "The Wall is Complete! You may now sign up for additional watches."
                                         : `${24 - totalWatchesCovered} gaps remaining — help complete the wall.`}
                                 </p>
                             </div>
@@ -219,9 +227,9 @@ export default function SchedulePage() {
                             const isMine = myWatches.includes(idx)
                             const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
                             const isWallFull = totalWatchesCovered === 24
-                            // Only lock if user already has a DIFFERENT watch. 
-                            // If they have NO watch, all are open.
-                            const isLocked = !isAdmin && (myWatches.length > 0 && !isMine)
+                            // Only lock if user already has a watch AND the wall is not yet full. 
+                            // If the wall is full, they can book more.
+                            const isLocked = !isAdmin && (myWatches.length > 0 && !isMine && !isWallFull)
                             const isEmpty = count === 0
 
                             return (
