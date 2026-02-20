@@ -111,6 +111,26 @@ export default function AdminDashboard() {
         }
     }
 
+    const handleResetAllWatches = async () => {
+        if (!confirm("CRITICAL WARNING: Are you sure you want to clear ALL time slots for all intercessors? This action cannot be undone.")) return
+        if (!confirm("Please confirm again: CLEAR ALL TIME SLOTS? The wall will be completely empty.")) return
+        if (!db) return
+
+        try {
+            setIsSaving(true)
+            const { deleteDoc, doc } = await import('firebase/firestore')
+            await Promise.all(
+                watches.map((w) => deleteDoc(doc(db!!, "watches", w.id)))
+            )
+            alert("All time slots have been successfully cleared.")
+        } catch (err) {
+            console.error("Failed to reset time slots:", err)
+            alert("An error occurred while clearing time slots.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     // Cleanup refs
     const unsubRef = useRef<(() => void)[]>([])
 
@@ -752,7 +772,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <button
                                         onClick={async () => {
                                             if (!db) return
@@ -770,9 +790,30 @@ export default function AdminDashboard() {
                                                 alert("Failed to lock room.")
                                             }
                                         }}
-                                        className="bg-red-900/10 hover:bg-red-900/20 border border-red-900/30 text-red-500 font-bold py-3 rounded-xl uppercase tracking-[0.2em] text-[9px] transition-all"
+                                        className="bg-amber-900/10 hover:bg-amber-900/20 border border-amber-900/30 text-amber-500 font-bold py-3 rounded-xl uppercase tracking-[0.2em] text-[9px] transition-all"
                                     >
                                         Lock Room (3 Hours)
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!db) return
+                                            // Lock until the start date in 2099 to simulate "indefinitely"
+                                            const lockUntil = new Date('2099-12-31T23:59:59')
+                                            try {
+                                                await setDoc(doc(db, "config", "metadata"), {
+                                                    roomLockedUntil: lockUntil,
+                                                    updatedAt: serverTimestamp(),
+                                                    updatedBy: auth?.currentUser?.email
+                                                }, { merge: true })
+                                                alert("Room locked indefinitely.")
+                                            } catch (err) {
+                                                console.error(err)
+                                                alert("Failed to lock room indefinitely.")
+                                            }
+                                        }}
+                                        className="bg-red-900/10 hover:bg-red-900/20 border border-red-900/30 text-red-500 font-bold py-3 rounded-xl uppercase tracking-[0.2em] text-[9px] transition-all"
+                                    >
+                                        Lock Indefinitely
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -797,6 +838,27 @@ export default function AdminDashboard() {
                                 <p className="text-[10px] text-stone-600 italic">
                                     Locking the room prevents intercessors from joining the video room. Use this for scheduled maintenance or private leadership sessions.
                                 </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-12">
+                            <h4 className="serif text-2xl text-red-500 mb-8">Danger Zone</h4>
+                            <div className="glass p-8 rounded-3xl border-red-900/30 space-y-6">
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.2em] text-red-500 font-bold mb-2">
+                                        Reset Prayer Chain
+                                    </h5>
+                                    <p className="text-[10px] text-stone-500 italic mb-4">
+                                        This will immediately remove ALL intercessors from their chosen time slots. The intercessor accounts will remain, but the wall will be completely empty. Use this only when starting a new 72-hour chain.
+                                    </p>
+                                    <button
+                                        onClick={handleResetAllWatches}
+                                        disabled={isSaving || watches.length === 0}
+                                        className="w-full bg-red-900/10 hover:bg-red-900/20 border border-red-900/30 text-red-500 font-bold py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSaving ? "Processing..." : "Clear All Time Slots"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

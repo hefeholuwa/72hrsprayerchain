@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase'
 import { PRAYER_THEMES, PrayerTheme } from '@/lib/prayer-points'
 import { usePrayerTheme } from '@/hooks/usePrayerTheme'
@@ -38,6 +38,30 @@ export default function PrayerPointsEditor() {
         } catch (err) {
             console.error(err)
             setMsg("Error saving changes.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleReset = async () => {
+        if (!confirm("Are you sure you want to reset all prayer points to 'Coming Soon'? This will delete any custom points you have saved.")) {
+            return
+        }
+
+        if (!db || !auth) {
+            setMsg("Error: Database connection failed.")
+            return
+        }
+
+        setIsSaving(true)
+        setMsg("")
+        try {
+            await deleteDoc(doc(db, "config", "prayer_points"))
+            setThemes(PRAYER_THEMES)
+            setMsg("Prayer Points reset to defaults successfully.")
+        } catch (err) {
+            console.error(err)
+            setMsg("Error resetting prayer points.")
         } finally {
             setIsSaving(false)
         }
@@ -151,20 +175,27 @@ export default function PrayerPointsEditor() {
                 })}
             </div>
 
-            <div className="border-t border-white/5 pt-6">
+            <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row gap-4">
+                <button
+                    onClick={handleReset}
+                    disabled={isSaving}
+                    className="w-full md:w-1/3 bg-red-900/10 hover:bg-red-900/20 text-red-500 border border-red-900/30 font-black py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] transition-all disabled:opacity-50"
+                >
+                    {isSaving ? "Resetting..." : "Reset to Defaults"}
+                </button>
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="w-full bg-stone-100 hover:bg-white text-[#050505] font-black py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] transition-all disabled:opacity-50"
+                    className="w-full md:w-2/3 bg-stone-100 hover:bg-white text-[#050505] font-black py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] transition-all disabled:opacity-50"
                 >
                     {isSaving ? "Publishing Updates..." : "Publish Prayer Points"}
                 </button>
-                {msg && (
-                    <p className={`text-xs text-center mt-3 ${msg.includes('Error') ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {msg}
-                    </p>
-                )}
             </div>
+            {msg && (
+                <p className={`text-xs text-center mt-3 ${msg.includes('Error') ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {msg}
+                </p>
+            )}
         </div>
     )
 }

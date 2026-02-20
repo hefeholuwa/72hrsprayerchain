@@ -20,7 +20,9 @@ export default function LandingPage() {
         progress: timingProgress,
         countdownString,
         currentWatch: dynamicWatch,
-        startDate
+        startDate,
+        roomLockedUntil,
+        now
     } = useEventTiming()
 
     const [user, setUser] = useState<any>(null)
@@ -34,6 +36,8 @@ export default function LandingPage() {
     const [stats, setStats] = useState({ intercessors: 0, countries: 0 })
     const [allUsers, setAllUsers] = useState<any[]>([])
     const [onlineUids, setOnlineUids] = useState<string[]>([])
+
+    const isRoomLocked = roomLockedUntil && roomLockedUntil.getTime() > now.getTime()
 
     useEffect(() => {
         if (!db) return
@@ -325,18 +329,29 @@ export default function LandingPage() {
                                         </p>
                                     </div>
 
-                                    <Link
-                                        href="/enter"
-                                        className="inline-flex items-center gap-3 text-xs md:text-sm font-bold text-amber-500 hover:text-amber-400 uppercase tracking-[0.2em] transition-all group/link cursor-pointer"
-                                    >
-                                        <span className="relative">
-                                            Enter the Presence
-                                            <span className="absolute -bottom-1 left-0 w-0 h-px bg-amber-500 group-hover/link:w-full transition-all duration-300" />
-                                        </span>
-                                        <svg className="w-5 h-5 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                        </svg>
-                                    </Link>
+                                    {isRoomLocked ? (
+                                        <div className="inline-flex items-center gap-3 text-xs md:text-sm font-bold text-stone-600 uppercase tracking-[0.2em] cursor-not-allowed">
+                                            <span className="relative">
+                                                <svg className="w-5 h-5 inline-block mr-2 -mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9a6 6 0 00-12 0v2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V10a2 2 0 00-2-2h-1V8zm-2 2H8V8a4 4 0 118 0v2z" />
+                                                </svg>
+                                                Room Locked
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            href="/enter"
+                                            className="inline-flex items-center gap-3 text-xs md:text-sm font-bold text-amber-500 hover:text-amber-400 uppercase tracking-[0.2em] transition-all group/link cursor-pointer"
+                                        >
+                                            <span className="relative">
+                                                Enter the Presence
+                                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-amber-500 group-hover/link:w-full transition-all duration-300" />
+                                            </span>
+                                            <svg className="w-5 h-5 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -374,15 +389,27 @@ export default function LandingPage() {
 
                     {/* CTA Buttons */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400">
-                        <Link
-                            href="/enter"
-                            className="flex items-center justify-center gap-2 font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs transition-all bg-stone-100 hover:bg-white text-[#0a0a0f] shadow-xl shadow-black/30 cursor-pointer"
-                        >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
-                            </svg>
-                            Enter Altar Room
-                        </Link>
+                        {isRoomLocked ? (
+                            <button
+                                disabled
+                                className="flex items-center justify-center gap-2 font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs transition-all bg-stone-900/50 text-stone-600 border border-stone-800 cursor-not-allowed"
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9a6 6 0 00-12 0v2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V10a2 2 0 00-2-2h-1V8zm-2 2H8V8a4 4 0 118 0v2z" />
+                                </svg>
+                                Room Locked
+                            </button>
+                        ) : (
+                            <Link
+                                href="/enter"
+                                className="flex items-center justify-center gap-2 font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs transition-all bg-stone-100 hover:bg-white text-[#0a0a0f] shadow-xl shadow-black/30 cursor-pointer"
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                                </svg>
+                                Enter Altar Room
+                            </Link>
+                        )}
                         <Link
                             href="/schedule"
                             className="flex items-center justify-center gap-2 glass-button font-bold py-4 md:py-5 px-6 md:px-8 rounded-2xl tracking-[0.2em] uppercase text-[11px] md:text-xs text-stone-300 hover:text-white cursor-pointer"

@@ -44,7 +44,7 @@ export const getSimulatedOccupancy = (dayIdx: number, hourIdx: number) => {
 }
 
 // Set this to the actual start date of your 72h prayer chain
-export const EVENT_START_DATE = new Date('2026-01-29T00:00:00')
+export const EVENT_START_DATE = new Date('2026-02-26T00:00:00')
 export const TOTAL_HOURS = 72
 
 export const getEventProgress = () => {
