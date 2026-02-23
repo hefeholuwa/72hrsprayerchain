@@ -96,18 +96,19 @@ export default function AdminDashboard() {
     const [roomLockedUntil, setRoomLockedUntil] = useState<any>(null)
     const router = useRouter()
 
-    const deleteUserWatch = async (userId: string) => {
-        if (!confirm("Are you sure you want to clear the watch for this intercessor?")) return
+    const deleteUserWatches = async (watchIds: string[]) => {
+        if (!confirm("Are you sure you want to clear all watches for this intercessor?")) return
         if (!db) return
 
         try {
-            const commitId = `watch_${userId}`
             const { deleteDoc } = await import('firebase/firestore')
-            await deleteDoc(doc(db, "watches", commitId))
-            alert("Watch cleared for this user.")
+            for (const id of watchIds) {
+                await deleteDoc(doc(db, "watches", id))
+            }
+            alert("Watches cleared for this user.")
         } catch (err) {
             console.error("Delete failed:", err)
-            alert("Failed to delete watch.")
+            alert("Failed to delete watches.")
         }
     }
 
@@ -391,11 +392,11 @@ export default function AdminDashboard() {
                                     style={{ width: `${(totalWatchesCovered / 24) * 100}%` }}
                                 />
                             </div>
-                                <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
-                                    {totalWatchesCovered === 24
+                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
+                                {totalWatchesCovered === 24
                                     ? "The Wall is complete. Monitor continuity and strengthen empty transitions."
                                     : `Phase 1: ${24 - totalWatchesCovered} gaps remaining.`}
-                                </p>
+                            </p>
                         </div>
 
                         {/* Gap List */}
@@ -598,8 +599,8 @@ export default function AdminDashboard() {
                                                 const expiry = typeof s.expiry === 'object' && s.expiry?.toMillis ? s.expiry.toMillis() : s.expiry
                                                 return s.userId === u.id && expiry > currentTime
                                             })
-                                            const userWatch = watches.find(w => w.userId === u.id)
-                                            const userWatchCount = userWatch ? 1 : 0
+                                            const userWatches = watches.filter(w => w.userId === u.id)
+                                            const hasWatches = userWatches.length > 0
 
                                             return (
                                                 <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
@@ -614,14 +615,14 @@ export default function AdminDashboard() {
                                                     </td>
                                                     <td className="p-6">
                                                         <div className="flex items-center justify-between group/row">
-                                                            <span className={`text-[10px] font-bold ${userWatch ? 'text-amber-500' : 'text-stone-700'}`}>
-                                                                {userWatch ? HOURS[userWatch.hourIdx] : 'No Watch'}
+                                                            <span className={`text-[10px] font-bold ${hasWatches ? 'text-amber-500' : 'text-stone-700'}`}>
+                                                                {hasWatches ? userWatches.map(w => HOURS[w.hourIdx]).join(', ') : 'No Watch'}
                                                             </span>
-                                                            {userWatch && (
+                                                            {hasWatches && (
                                                                 <button
-                                                                    onClick={() => deleteUserWatch(u.id)}
+                                                                    onClick={() => deleteUserWatches(userWatches.map(w => w.id))}
                                                                     className="opacity-0 group-hover/row:opacity-100 p-1 text-red-900 hover:text-red-500 transition-all"
-                                                                    title="Clear watch"
+                                                                    title="Clear watches"
                                                                 >
                                                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
