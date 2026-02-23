@@ -92,7 +92,7 @@ export default function AdminDashboard() {
     const [isSaving, setIsSaving] = useState(false)
     const [saveMsg, setSaveMsg] = useState("")
     const [onlineSessions, setOnlineSessions] = useState<any[]>([])
-    const [currentTime, setCurrentTime] = useState(Date.now())
+    const [currentTime, setCurrentTime] = useState(0)
     const [roomLockedUntil, setRoomLockedUntil] = useState<any>(null)
     const router = useRouter()
 
@@ -136,6 +136,7 @@ export default function AdminDashboard() {
     const unsubRef = useRef<(() => void)[]>([])
 
     useEffect(() => {
+        setCurrentTime(Date.now())
         const timer = setInterval(() => setCurrentTime(Date.now()), 1000)
 
         const checkAuth = auth?.onAuthStateChanged(async (user) => {
