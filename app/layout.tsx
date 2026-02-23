@@ -24,8 +24,11 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <html lang="en" data-scroll-behavior="smooth">
-            <body className={`${inter.variable} ${playfair.variable} font-sans min-h-screen bg-[#0a0a0f] text-stone-100 selection:bg-amber-500/30 selection:text-stone-100`}>
+        <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+            <body
+                suppressHydrationWarning
+                className={`${inter.variable} ${playfair.variable} font-sans min-h-screen bg-[#0a0a0f] text-stone-100 selection:bg-amber-500/30 selection:text-stone-100`}
+            >
                 <FirebaseHeartbeat />
                 {children}
             </body>
