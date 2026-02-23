@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { HOURS, getCurrentWatch, getSimulatedOccupancy, ADMIN_EMAILS } from '@/lib/constants'
 import { useEventTiming } from '@/hooks/useEventTiming'
 import { auth, db, isFirebaseAvailable } from '@/lib/firebase'
-import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, deleteDoc } from "firebase/firestore"
+import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, deleteDoc, getDoc } from "firebase/firestore"
 
 export default function SchedulePage() {
     const { isStarted } = useEventTiming()
@@ -17,6 +17,7 @@ export default function SchedulePage() {
     const [myWatches, setMyWatches] = useState<number[]>([])
     const [usingSimulation, setUsingSimulation] = useState(true)
     const [mounted, setMounted] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null)
     const router = useRouter()
 
@@ -81,37 +82,44 @@ export default function SchedulePage() {
             router.push('/login?redirect=/schedule')
             return
         }
+        if (isSubmitting) return
 
         if (!isFirebaseAvailable || !db) {
             showNotification("Watch recorded locally. Connect to sync.", 'info')
             return
         }
 
-        const count = commitments[hourIdx] || 0
         const isMine = myWatches.includes(hourIdx)
-
-        const isWallFull = totalWatchesCovered === 24
+        const count = usingSimulation ? getSimulatedOccupancy(0, hourIdx) : (commitments[hourIdx] || 0)
 
         if (!isAdmin) {
-            // Restriction: If user already has a watch AND the wall is not full, they cannot take another
-            if (myWatches.length > 0 && !isWallFull) {
-                if (isMine) {
-                    showNotification("You are already posted here. Stand firm in your watch!", 'info')
-                } else {
-                    showNotification("You have already committed to a watch. Let others fill the gaps until the wall is complete.", 'info')
+            // If the wall is NOT full
+            if (!isWallFull) {
+                // Prevent user from taking more than one slot total
+                if (myWatches.length > 0) {
+                    if (isMine) {
+                        showNotification("You are already posted here. Stand firm in your watch!", 'info')
+                    } else {
+                        showNotification("You have already committed to a watch. Let others fill the gaps until the wall is complete.", 'info')
+                    }
+                    return
                 }
-                return
-            }
-            // If the wall IS full, they can take additional watches, but not the SAME watch twice
-            if (myWatches.length > 0 && isWallFull && isMine) {
-                showNotification("You are already posted for this specific hour.", 'info')
-                return
+
+                // Prevent ANY user from taking a slot that is already occupied
+                if (count > 0 && !isMine) {
+                    showNotification("This hour is currently covered by another watchman. Please fill an empty gap.", 'info')
+                    return
+                }
+            } else {
+                // If the wall IS full, they can take additional watches, but not the SAME watch twice
+                if (isMine) {
+                    showNotification("You are already posted for this specific hour.", 'info')
+                    return
+                }
             }
         }
 
-        // Now that users can take multiple watches (when wall is full), we MUST use the hourIdx in their document ID
-        // so they don't overwrite their existing commitments.
-        const commitId = `watch_${user.uid}_${hourIdx}`
+        const commitId = `watch_${user.uid}`
         const docRef = doc(db, "watches", commitId)
 
         if (isAdmin && isMine) {
@@ -127,6 +135,15 @@ export default function SchedulePage() {
         }
 
         try {
+            setIsSubmitting(true)
+            if (!isAdmin) {
+                const existingWatch = await getDoc(docRef)
+                if (existingWatch.exists()) {
+                    showNotification("Your watch is already set and cannot be changed.", 'info')
+                    return
+                }
+            }
+
             await setDoc(docRef, {
                 userId: user.uid,
                 userName: user.displayName || "A Watchman",
@@ -144,6 +161,8 @@ export default function SchedulePage() {
         } catch (e) {
             console.error("Commitment failed", e)
             showNotification("Failed to record watch. Please try again.", 'error')
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -203,7 +222,7 @@ export default function SchedulePage() {
                                 </div>
                                 <p className="mt-4 text-xs text-stone-500 text-center leading-relaxed">
                                     {totalWatchesCovered === 24
-                                        ? "The Wall is Complete! You may now sign up for additional watches."
+                                        ? "The Wall is complete. New intercessors can still join where led."
                                         : `${24 - totalWatchesCovered} gaps remaining — help complete the wall.`}
                                 </p>
                             </div>
@@ -226,10 +245,13 @@ export default function SchedulePage() {
                             const count = usingSimulation ? getSimulatedOccupancy(0, idx) : (commitments[idx] || 0)
                             const isMine = myWatches.includes(idx)
                             const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
-                            const isWallFull = totalWatchesCovered === 24
-                            // Only lock if user already has a watch AND the wall is not yet full. 
-                            // If the wall is full, they can book more.
-                            const isLocked = !isAdmin && (myWatches.length > 0 && !isMine && !isWallFull)
+                            // Lock if:
+                            // 1. User is not admin
+                            // 2. AND (they already have a watch AND wall isn't full) OR (this slot has someone in it AND wall isn't full AND it's not their watch)
+                            const isLocked = !isAdmin && (
+                                (!isWallFull && myWatches.length > 0 && !isMine) ||
+                                (!isWallFull && count > 0 && !isMine)
+                            )
                             const isEmpty = count === 0
 
                             return (

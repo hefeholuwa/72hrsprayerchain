@@ -391,11 +391,11 @@ export default function AdminDashboard() {
                                     style={{ width: `${(totalWatchesCovered / 24) * 100}%` }}
                                 />
                             </div>
-                            <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
-                                {totalWatchesCovered === 24
-                                    ? "The Wall is Complete! Slots are now open for additional intercessors."
+                                <p className="mt-4 text-[9px] text-stone-600 uppercase tracking-widest font-bold">
+                                    {totalWatchesCovered === 24
+                                    ? "The Wall is complete. Monitor continuity and strengthen empty transitions."
                                     : `Phase 1: ${24 - totalWatchesCovered} gaps remaining.`}
-                            </p>
+                                </p>
                         </div>
 
                         {/* Gap List */}

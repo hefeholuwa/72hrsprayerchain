@@ -63,7 +63,13 @@ service cloud.firestore {
     // --- WATCHES (24-HOUR WATCH COMMITMENTS) ---
     match /watches/{watchId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow create: if isAdmin() || (
+        request.auth != null &&
+        watchId == "watch_" + request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        !exists(/databases/$(database)/documents/watches/$(watchId))
+      );
+      allow update, delete: if isAdmin();
     }
 
     // --- CONFIGURATION ---
