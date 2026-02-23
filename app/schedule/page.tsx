@@ -93,33 +93,22 @@ export default function SchedulePage() {
         const count = usingSimulation ? getSimulatedOccupancy(0, hourIdx) : (commitments[hourIdx] || 0)
 
         if (!isAdmin) {
-            // If the wall is NOT full
-            if (!isWallFull) {
-                // Prevent user from taking more than one slot total
-                if (myWatches.length > 0) {
-                    if (isMine) {
-                        showNotification("You are already posted here. Stand firm in your watch!", 'info')
-                    } else {
-                        showNotification("You have already committed to a watch. Let others fill the gaps until the wall is complete.", 'info')
-                    }
-                    return
-                }
-
-                // Prevent ANY user from taking a slot that is already occupied
-                if (count > 0 && !isMine) {
-                    showNotification("This hour is currently covered by another watchman. Please fill an empty gap.", 'info')
-                    return
-                }
-            } else {
-                // If the wall IS full, they can take additional watches, but not the SAME watch twice
+            if (myWatches.length > 0) {
                 if (isMine) {
-                    showNotification("You are already posted for this specific hour.", 'info')
-                    return
+                    showNotification("You are already posted here. Stand firm in your watch!", 'info')
+                } else {
+                    showNotification("You have already committed to a watch. Your schedule is locked.", 'info')
                 }
+                return
+            }
+
+            if (count > 0 && !isMine) {
+                showNotification("This hour is already covered. Please choose an empty watch.", 'info')
+                return
             }
         }
 
-        const commitId = `watch_${user.uid}`
+        const commitId = isAdmin ? `watch_${user.uid}_${hourIdx}` : `watch_${user.uid}`
         const docRef = doc(db, "watches", commitId)
 
         if (isAdmin && isMine) {
@@ -245,12 +234,10 @@ export default function SchedulePage() {
                             const count = usingSimulation ? getSimulatedOccupancy(0, idx) : (commitments[idx] || 0)
                             const isMine = myWatches.includes(idx)
                             const isCurrentWatch = isStarted && idx === currentWatch.hourIdx
-                            // Lock if:
-                            // 1. User is not admin
-                            // 2. AND (they already have a watch AND wall isn't full) OR (this slot has someone in it AND wall isn't full AND it's not their watch)
+                            // Lock if the user already has a watch or this hour is already covered.
                             const isLocked = !isAdmin && (
-                                (!isWallFull && myWatches.length > 0 && !isMine) ||
-                                (!isWallFull && count > 0 && !isMine)
+                                (myWatches.length > 0 && !isMine) ||
+                                (count > 0 && !isMine)
                             )
                             const isEmpty = count === 0
 
