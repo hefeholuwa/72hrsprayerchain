@@ -12,6 +12,7 @@ export default function SchedulePage() {
     const { isStarted } = useEventTiming()
     const currentWatch = getCurrentWatch()
     const [user, setUser] = useState<any>(null)
+    const [authLoading, setAuthLoading] = useState(true)
     const [commitments, setCommitments] = useState<Record<string, number>>({})
     const [totalWatchesCovered, setTotalWatchesCovered] = useState(0)
     const [myWatches, setMyWatches] = useState<number[]>([])
@@ -30,17 +31,27 @@ export default function SchedulePage() {
 
     useEffect(() => {
         setMounted(true)
-        if (isFirebaseAvailable) {
-            setUsingSimulation(false)
+        if (!auth || !isFirebaseAvailable) {
+            router.replace('/login?redirect=/schedule')
+            return
         }
 
         const unsub = auth?.onAuthStateChanged(u => {
+            if (!u) {
+                router.replace('/login?redirect=/schedule')
+                return
+            }
+
             setUser(u)
+            setUsingSimulation(false)
+            setAuthLoading(false)
         })
         return () => unsub?.()
-    }, [])
+    }, [router])
 
     useEffect(() => {
+        if (!user) return
+
         if (!isFirebaseAvailable || !db) {
             setUsingSimulation(true)
             return
@@ -153,6 +164,14 @@ export default function SchedulePage() {
         } finally {
             setIsSubmitting(false)
         }
+    }
+
+    if (!mounted || authLoading || !user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-12 h-12 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+            </div>
+        )
     }
 
     return (

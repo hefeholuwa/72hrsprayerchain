@@ -40,35 +40,68 @@ export default function LandingPage() {
     const isRoomLocked = roomLockedUntil && roomLockedUntil.getTime() > now.getTime()
 
     useEffect(() => {
-        if (!db) return
+        if (!db || !auth) return
 
-        const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
-            const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-            setAllUsers(users)
+        const firestore = db
 
-            const locations = users.map((u: any) => u.location || u.country).filter(Boolean)
-            const uniqueCountries = new Set(locations.map((loc: string) => loc.split(',').pop()?.trim())).size
+        let unsubUsers: (() => void) | undefined
+        let unsubOnline: (() => void) | undefined
 
-            setStats({
-                intercessors: users.length || 0,
-                countries: uniqueCountries || 0
-            })
-        })
+        const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
+            unsubUsers?.()
+            unsubOnline?.()
 
-        const unsubOnline = onSnapshot(collection(db, "active_sessions"), (snap) => {
-            const active = snap.docs
-                .map(d => d.data())
-                .filter(s => {
-                    const expiry = typeof s.expiry === 'object' && s.expiry?.toMillis ? s.expiry.toMillis() : s.expiry
-                    return expiry > Date.now()
-                })
-                .map(s => s.userId)
-            setOnlineUids(active)
+            if (!currentUser) {
+                setAllUsers([])
+                setOnlineUids([])
+                setStats({ intercessors: 0, countries: 0 })
+                return
+            }
+
+            unsubUsers = onSnapshot(
+                collection(firestore, "users"),
+                (snap) => {
+                    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    setAllUsers(users)
+
+                    const locations = users.map((u: any) => u.location || u.country).filter(Boolean)
+                    const uniqueCountries = new Set(locations.map((loc: string) => loc.split(',').pop()?.trim())).size
+
+                    setStats({
+                        intercessors: users.length || 0,
+                        countries: uniqueCountries || 0
+                    })
+                },
+                (error) => {
+                    console.warn("Could not read users collection.", error)
+                    setAllUsers([])
+                    setStats({ intercessors: 0, countries: 0 })
+                }
+            )
+
+            unsubOnline = onSnapshot(
+                collection(firestore, "active_sessions"),
+                (snap) => {
+                    const active = snap.docs
+                        .map(d => d.data())
+                        .filter(s => {
+                            const expiry = typeof s.expiry === 'object' && s.expiry?.toMillis ? s.expiry.toMillis() : s.expiry
+                            return expiry > Date.now()
+                        })
+                        .map(s => s.userId)
+                    setOnlineUids(active)
+                },
+                (error) => {
+                    console.warn("Could not read active sessions.", error)
+                    setOnlineUids([])
+                }
+            )
         })
 
         return () => {
-            unsubUsers()
-            unsubOnline()
+            unsubUsers?.()
+            unsubOnline?.()
+            unsubAuth()
         }
     }, [])
 
